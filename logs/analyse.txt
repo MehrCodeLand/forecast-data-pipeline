@@ -1,0 +1,37 @@
+2025-10-25 00:26:21.278 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:26:22.893 | INFO     | data_json_manager:read_data:29 - File data/forecast_data_tehran.json not found, creating new file
+2025-10-25 00:26:22.894 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 0
+2025-10-25 00:26:22.894 | INFO     | __main__:main:48 -  we have avg here : <coroutine object Analyse.get_avg at 0x102af48c0>
+2025-10-25 00:26:22.895 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 00:26:33.510 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:26:37.500 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 1
+2025-10-25 00:26:37.501 | WARNING  | analyse:get_avg:24 - Requested period (10) exceeds available data (2). Using available data.
+2025-10-25 00:26:37.502 | INFO     | __main__:main:48 -  we have avg here : None
+2025-10-25 00:26:37.502 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 00:26:55.141 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:26:56.237 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 2
+2025-10-25 00:26:56.238 | INFO     | analyse:get_avg:32 - we have issues in Analyse and get_avg method : list indices must be integers or slices, not str
+2025-10-25 00:26:56.239 | INFO     | __main__:main:48 -  we have avg here : None
+2025-10-25 00:26:56.239 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 00:28:44.831 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:28:45.947 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 3
+2025-10-25 00:28:45.948 | INFO     | analyse:get_avg:32 - we have issues in Analyse and get_avg method : list indices must be integers or slices, not str
+2025-10-25 00:28:45.949 | INFO     | __main__:main:48 -  we have avg here : None
+2025-10-25 00:28:45.949 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 00:29:56.928 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:29:58.402 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 4
+2025-10-25 00:29:58.402 | INFO     | analyse:get_avg:32 - we have issues in Analyse and get_avg method : unsupported operand type(s) for /: 'builtin_function_or_method' and 'int'
+2025-10-25 00:29:58.403 | INFO     | __main__:main:48 -  we have avg here : None
+2025-10-25 00:29:58.403 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 00:30:44.867 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 00:30:45.530 | INFO     | data_json_manager:save_data:65 - Data saved successfully with id: 5
+2025-10-25 00:30:45.530 | INFO     | __main__:main:48 -  we have avg here : 13.5
+2025-10-25 00:30:45.530 | INFO     | __main__:main:52 - Weather data collection completed
+2025-10-25 23:12:10.089 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 23:12:10.091 | INFO     | __main__:main:52 -  we have avg here : 13.5
+2025-10-25 23:12:10.091 | INFO     | __main__:main:56 - Weather data collection completed
+2025-10-25 23:18:04.058 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 23:18:04.060 | INFO     | analyse:estimate_delta:78 - we have issues in estimate_delta : list index out of range
+2025-10-25 23:18:04.060 | INFO     | __main__:main:60 - Weather data collection completed
+2025-10-25 23:19:44.749 | INFO     | __main__:main:33 - Starting weather data collection
+2025-10-25 23:19:44.752 | INFO     | __main__:main:60 - Weather data collection completed
