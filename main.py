@@ -6,7 +6,7 @@ from pathlib import Path
 from data_json_manager import JSONDataManager
 
 from analyse import Analyse
-
+from data_type_convertor import WeatherDataConverter
 
 logger.add('logs/tehran.txt', rotation="1 week")
 
@@ -51,6 +51,20 @@ async def main():
 
         rate = await analyse.estimate_delta(hours=10)
         print(f"delta : {rate}")
+
+
+        weather = WeatherDataConverter(await data_manager.read_data())
+        df  = await weather.to_dataframe()
+        print(df)
+
+
+        res_wind = await analyse.get_avg_windspeed(period=5)
+        print(f"winddd1 {res_wind}")
+
+        res_wind2 = await analyse.get_wind_direction_variability(period=10)
+        print(f"wind2222 : {res_wind2}")
+
+        
         
 
 
