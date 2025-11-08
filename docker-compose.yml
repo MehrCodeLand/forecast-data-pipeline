@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  weather-api:
+    build: .
+    container_name: weather-api
+    ports:
+      - "8342:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Tehran
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

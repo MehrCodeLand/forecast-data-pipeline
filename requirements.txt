@@ -3,3 +3,5 @@ requests
 loguru
 pandas
 numpy
+fastapi
+uvicorn
