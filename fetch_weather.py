@@ -24,7 +24,7 @@ async def fetch_weather_data(lat: float, lon: float):
 async def main():
     try:
         logger.info("Starting weather data collection")
-        lat, lon = 35.4120, 51.2323
+        lat, lon = 35.685017, 51.389693
         
         weather_data = await fetch_weather_data(lat, lon)
         data_manager = JSONDataManager('data/forecast_data_tehran.json')
