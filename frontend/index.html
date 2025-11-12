@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Analysis Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>⛅ Weather Analysis</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">Dashboard</a></li>
+                <li><a href="temperature.html">Temperature</a></li>
+                <li><a href="wind.html">Wind</a></li>
+                <li><a href="data.html">Raw Data</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <h2>Weather Summary</h2>
+            <div class="controls">
+                <label for="period">Period (hours):</label>
+                <input type="number" id="period" value="24" min="1" max="100">
+                <button onclick="loadSummary()" class="btn">Refresh</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="summary-grid" class="card-grid">
+            <!-- Cards will be loaded here -->
+        </div>
+
+        <div class="card">
+            <h3>About This Dashboard</h3>
+            <p>This dashboard provides real-time weather analysis for Tehran, Iran. Data is collected hourly and analyzed using various metrics.</p>
+            <ul>
+                <li><strong>Temperature Analysis:</strong> Average, range, and rate of change</li>
+                <li><strong>Wind Analysis:</strong> Speed, direction, and variability</li>
+                <li><strong>Historical Data:</strong> Access to all collected data points</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Weather Analysis System | Tehran, Iran</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

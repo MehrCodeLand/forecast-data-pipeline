@@ -12,9 +12,12 @@ services:
     environment:
       - TZ=Asia/Tehran
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+
+  frontend:
+    image: nginx:alpine
+    container_name: weather-frontend
+    ports:
+      - "8038:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    restart: unless-stopped

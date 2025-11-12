@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Analysis</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>⛅ Weather Analysis</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="temperature.html">Temperature</a></li>
+                <li><a href="wind.html" class="active">Wind</a></li>
+                <li><a href="data.html">Raw Data</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <h2>Wind Analysis</h2>
+            <div class="controls">
+                <label for="wind-period">Period (hours):</label>
+                <input type="number" id="wind-period" value="24" min="1" max="100">
+                <button onclick="loadWindData()" class="btn">Analyze</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="card-grid">
+            <div class="card">
+                <h3>Average Wind Speed</h3>
+                <div id="avg-wind" class="metric-value">--</div>
+                <p class="metric-unit">km/h</p>
+            </div>
+
+            <div class="card">
+                <h3>Peak Wind Speed</h3>
+                <div id="peak-wind" class="metric-value">--</div>
+                <p class="metric-unit">km/h</p>
+            </div>
+
+            <div class="card">
+                <h3>Dominant Direction</h3>
+                <div id="wind-direction" class="metric-value">--</div>
+                <p class="metric-unit">degrees</p>
+                <p class="direction-text" id="direction-text">--</p>
+            </div>
+
+            <div class="card">
+                <h3>Direction Variability</h3>
+                <div id="wind-variability" class="metric-value">--</div>
+                <p class="metric-unit">std deviation</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Calm Periods Analysis</h3>
+            <div class="controls" style="margin-bottom: 15px;">
+                <label for="calm-threshold">Threshold (km/h):</label>
+                <input type="number" id="calm-threshold" value="5" min="0" step="0.5">
+                <button onclick="loadCalmPeriods()" class="btn btn-secondary">Calculate</button>
+            </div>
+            <div id="calm-periods" class="metric-detail">
+                <p>Calm Periods: <span id="calm-count">--</span></p>
+                <p>Total Periods: <span id="total-periods">--</span></p>
+                <p>Calm Percentage: <span id="calm-percentage">--</span>%</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Weather Analysis System | Tehran, Iran</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="wind.js"></script>
+</body>
+</html>

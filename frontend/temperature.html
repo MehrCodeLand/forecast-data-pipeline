@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Analysis</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>⛅ Weather Analysis</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="temperature.html" class="active">Temperature</a></li>
+                <li><a href="wind.html">Wind</a></li>
+                <li><a href="data.html">Raw Data</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <h2>Temperature Analysis</h2>
+            <div class="controls">
+                <label for="temp-period">Period (hours):</label>
+                <input type="number" id="temp-period" value="24" min="1" max="100">
+                <button onclick="loadTemperatureData()" class="btn">Analyze</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="card-grid">
+            <div class="card">
+                <h3>Average Temperature</h3>
+                <div id="avg-temp" class="metric-value">--</div>
+                <p class="metric-unit">°C</p>
+            </div>
+
+            <div class="card">
+                <h3>Temperature Range</h3>
+                <div id="temp-range" class="metric-detail">
+                    <p>Min: <span id="temp-min">--</span>°C</p>
+                    <p>Max: <span id="temp-max">--</span>°C</p>
+                    <p>Range: <span id="temp-range-val">--</span>°C</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Rate of Change</h3>
+                <div id="rate-change" class="metric-value">--</div>
+                <p class="metric-unit">°C/hour</p>
+            </div>
+
+            <div class="card">
+                <h3>Delta per Hour</h3>
+                <div id="delta" class="metric-value">--</div>
+                <p class="metric-unit">°C/hour</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Analysis Parameters</h3>
+            <p>Period: <span id="analysis-period">24</span> hours</p>
+            <p>Last Updated: <span id="last-updated">--</span></p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Weather Analysis System | Tehran, Iran</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="temperature.js"></script>
+</body>
+</html>
