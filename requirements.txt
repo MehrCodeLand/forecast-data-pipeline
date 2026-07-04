@@ -1,7 +1,5 @@
-beautifulsoup4
-requests
+httpx
 loguru
 pandas
-numpy
 fastapi
 uvicorn

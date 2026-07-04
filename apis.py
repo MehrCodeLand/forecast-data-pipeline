@@ -1,21 +1,36 @@
+from contextlib import asynccontextmanager
+from typing import Optional
+
+import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
-from typing import Optional
-from data_json_manager import JSONDataManager
-from analyse import Analyse
 from loguru import logger
-import uvicorn
+
+from analyse import Analyse
+from config import settings
+from data_json_manager import JSONDataManager
+from scheduler import WeatherScheduler
 
 logger.add('logs/api.txt', rotation="1 week")
 
+data_manager = JSONDataManager(settings.data_file)
+analyser = Analyse(json_manager=data_manager)
+scheduler = WeatherScheduler(data_manager)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    yield
+    await scheduler.stop()
+
+
 app = FastAPI(
     title="Weather Analysis API",
-    description="API for weather data analysis in Tehran",
-    version="1.0.0"
+    description="API for weather data collection and analysis in Tehran",
+    version="1.1.0",
+    lifespan=lifespan
 )
-
-data_manager = JSONDataManager('data/forecast_data_tehran.json')
-analyser = Analyse(json_manager=data_manager)
 
 
 @app.get("/")
@@ -23,12 +38,32 @@ async def root():
     return {
         "message": "Weather Analysis API",
         "endpoints": {
+            "health": "/health",
+            "scheduler": "/scheduler/*",
             "data": "/data",
             "temperature": "/temperature/*",
             "wind": "/wind/*",
             "summary": "/summary"
         }
     }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "scheduler_running": scheduler.running}
+
+
+@app.get("/scheduler/status")
+async def scheduler_status():
+    return scheduler.status()
+
+
+@app.post("/scheduler/collect-now")
+async def scheduler_collect_now():
+    success = await scheduler.collect_now()
+    if not success:
+        raise HTTPException(status_code=502, detail=f"Collection failed: {scheduler.last_error}")
+    return {"collected": True, "status": scheduler.status()}
 
 
 @app.get("/data")
@@ -181,4 +216,4 @@ async def get_weather_summary(period: int = Query(24, ge=1, description="Period 
 
 
 if __name__ == "__main__":
-    uvicorn.run("apis:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("apis:app", host="0.0.0.0", port=8000)
