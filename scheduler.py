@@ -52,6 +52,14 @@ class WeatherScheduler:
         self._task = None
         logger.info("Scheduler stopped")
 
+    async def set_interval(self, interval_minutes: int) -> None:
+        """Change the collection interval; restarts the loop so it applies immediately."""
+        self.interval_seconds = interval_minutes * 60
+        if self.running:
+            await self.stop()
+            self.start()
+        logger.info(f"Scheduler interval changed to {interval_minutes} minutes")
+
     async def _run_loop(self) -> None:
         while True:
             await self.collect_now()

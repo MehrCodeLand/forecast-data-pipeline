@@ -6,8 +6,8 @@ async function loadRawData() {
     
     try {
         const data = await apiRequest(`/data?limit=${limit}`);
-        
-        document.getElementById('total-records').textContent = data.count;
+
+        document.getElementById('total-records').textContent = data.total ?? data.count;
         document.getElementById('showing-records').textContent = data.data.length;
         
         displayDataTable(data.data);
@@ -30,7 +30,7 @@ function displayDataTable(data) {
             <td>${row.windspeed}</td>
             <td>${row.winddirection}° (${getWindDirection(row.winddirection)})</td>
             <td>${row.weathercode}</td>
-            <td>${row.is_day ? '☀️ Day' : '🌙 Night'}</td>
+            <td>${row.is_day ? 'Day' : 'Night'}</td>
         `;
         tbody.appendChild(tr);
     });

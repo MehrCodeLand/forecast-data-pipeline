@@ -3,9 +3,11 @@ from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+from admin_routes import create_admin_router
 from analyse import Analyse
 from config import settings
 from data_json_manager import JSONDataManager
@@ -28,9 +30,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Weather Analysis API",
     description="API for weather data collection and analysis in Tehran",
-    version="1.1.0",
+    version="1.2.0",
     lifespan=lifespan
 )
+
+# The public dashboard is served by nginx on another port, so browsers make
+# cross-origin requests to this API. Without CORS every dashboard call fails.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+app.include_router(create_admin_router(data_manager, analyser, scheduler))
 
 
 @app.get("/")
@@ -72,11 +85,15 @@ async def get_all_data(limit: Optional[int] = Query(None, ge=1, description="Lim
         data = await data_manager.read_data()
         if not data:
             raise HTTPException(status_code=404, detail="No data available")
-        
+
+        total = len(data)
+        data = list(reversed(data))  # newest first
         if limit:
             data = data[:limit]
-        
-        return JSONResponse(content={"count": len(data), "data": data})
+
+        return JSONResponse(content={"total": total, "count": len(data), "data": data})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_all_data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -90,6 +107,8 @@ async def get_average_temperature(period: int = Query(24, ge=1, description="Per
             raise HTTPException(status_code=404, detail="Unable to calculate average")
         
         return {"period": period, "average_temperature": result, "unit": "celsius"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_average_temperature: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -103,6 +122,8 @@ async def get_temperature_range(period: int = Query(24, ge=1, description="Perio
             raise HTTPException(status_code=404, detail="Unable to calculate range")
         
         return {"period": period, "temperature_range": result, "unit": "celsius"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_temperature_range: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -116,6 +137,8 @@ async def get_temperature_rate_of_change(hours: int = Query(10, ge=2, descriptio
             raise HTTPException(status_code=404, detail="Unable to calculate rate of change")
         
         return {"hours": hours, "avg_rate_of_change": result, "unit": "celsius/hour"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_temperature_rate_of_change: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -129,6 +152,8 @@ async def get_temperature_delta(hours: int = Query(10, ge=1, description="Hours 
             raise HTTPException(status_code=404, detail="Unable to calculate delta")
         
         return {"hours": hours, "delta_per_hour": result, "unit": "celsius/hour"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_temperature_delta: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -142,6 +167,8 @@ async def get_average_windspeed(period: int = Query(24, ge=1, description="Perio
             raise HTTPException(status_code=404, detail="Unable to calculate average windspeed")
         
         return {"period": period, "average_windspeed": result, "unit": "km/h"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_average_windspeed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -155,6 +182,8 @@ async def get_peak_windspeed(period: int = Query(24, ge=1, description="Period i
             raise HTTPException(status_code=404, detail="Unable to calculate peak windspeed")
         
         return {"period": period, "peak_windspeed": result, "unit": "km/h"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_peak_windspeed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -168,6 +197,8 @@ async def get_dominant_wind_direction(period: int = Query(24, ge=1, description=
             raise HTTPException(status_code=404, detail="Unable to calculate dominant direction")
         
         return {"period": period, "dominant_direction": result, "unit": "degrees"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_dominant_wind_direction: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -181,6 +212,8 @@ async def get_wind_direction_variability(period: int = Query(24, ge=2, descripti
             raise HTTPException(status_code=404, detail="Unable to calculate variability")
         
         return {"period": period, "direction_variability": result, "unit": "degrees_std_dev"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_wind_direction_variability: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -197,6 +230,8 @@ async def get_calm_periods(
             raise HTTPException(status_code=404, detail="Unable to calculate calm periods")
         
         return {"period": period, "threshold": threshold, "result": result, "unit": "km/h"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_calm_periods: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -210,6 +245,8 @@ async def get_weather_summary(period: int = Query(24, ge=1, description="Period 
             raise HTTPException(status_code=404, detail="Unable to generate summary")
         
         return {"period": period, "summary": result}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_weather_summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
