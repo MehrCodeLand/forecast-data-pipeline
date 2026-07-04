@@ -11,6 +11,7 @@ services:
       - ./logs:/app/logs
     environment:
       - TZ=Asia/Tehran
+      - FETCH_INTERVAL_MINUTES=60
     restart: unless-stopped
 
   frontend:
