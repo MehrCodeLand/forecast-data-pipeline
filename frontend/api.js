@@ -34,9 +34,17 @@ function hideError() {
     }
 }
 
+// Null-safe display: keeps real zero values visible instead of showing '--'
+function fmt(value) {
+    return (value === null || value === undefined) ? '--' : value;
+}
+
 function getWindDirection(degrees) {
+    if (degrees === null || degrees === undefined) {
+        return '--';
+    }
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const index = Math.round(degrees / 22.5) % 16;
+    const index = Math.round(((degrees % 360) + 360) % 360 / 22.5) % 16;
     return directions[index];
 }
 

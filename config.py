@@ -1,16 +1,74 @@
+import json
 import os
-from dataclasses import dataclass, field
+from pathlib import Path
+
+from loguru import logger
+
+SETTINGS_FILE = os.getenv("SETTINGS_FILE", "data/app_settings.json")
 
 
-@dataclass(frozen=True)
 class Settings:
-    """Application settings, overridable via environment variables."""
+    """Application settings.
 
-    latitude: float = field(default_factory=lambda: float(os.getenv("WEATHER_LAT", "35.685017")))
-    longitude: float = field(default_factory=lambda: float(os.getenv("WEATHER_LON", "51.389693")))
-    fetch_interval_minutes: int = field(default_factory=lambda: int(os.getenv("FETCH_INTERVAL_MINUTES", "60")))
-    data_file: str = field(default_factory=lambda: os.getenv("DATA_FILE", "data/forecast_data_tehran.json"))
-    api_url: str = "https://api.open-meteo.com/v1/forecast"
+    Defaults come from environment variables. Values changed at runtime
+    (through the admin panel) are persisted to SETTINGS_FILE and reloaded
+    on the next start, overriding the environment defaults.
+    """
+
+    def __init__(self):
+        self.latitude = float(os.getenv("WEATHER_LAT", "35.685017"))
+        self.longitude = float(os.getenv("WEATHER_LON", "51.389693"))
+        self.fetch_interval_minutes = int(os.getenv("FETCH_INTERVAL_MINUTES", "60"))
+        self.data_file = os.getenv("DATA_FILE", "data/forecast_data_tehran.json")
+        self.api_url = "https://api.open-meteo.com/v1/forecast"
+        self._load_overrides()
+
+    def _load_overrides(self) -> None:
+        try:
+            with open(SETTINGS_FILE) as f:
+                overrides = json.load(f)
+        except FileNotFoundError:
+            return
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Could not load settings overrides from {SETTINGS_FILE}: {e}")
+            return
+
+        self.latitude = float(overrides.get("latitude", self.latitude))
+        self.longitude = float(overrides.get("longitude", self.longitude))
+        self.fetch_interval_minutes = int(
+            overrides.get("fetch_interval_minutes", self.fetch_interval_minutes))
+
+    def update(self, latitude: float = None, longitude: float = None,
+               fetch_interval_minutes: int = None) -> None:
+        """Apply new values and persist them so they survive restarts."""
+        if latitude is not None:
+            self.latitude = float(latitude)
+        if longitude is not None:
+            self.longitude = float(longitude)
+        if fetch_interval_minutes is not None:
+            self.fetch_interval_minutes = int(fetch_interval_minutes)
+        self._persist()
+
+    def _persist(self) -> None:
+        try:
+            Path(SETTINGS_FILE).parent.mkdir(parents=True, exist_ok=True)
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump({
+                    "latitude": self.latitude,
+                    "longitude": self.longitude,
+                    "fetch_interval_minutes": self.fetch_interval_minutes,
+                }, f, indent=2)
+            logger.info(f"Settings persisted to {SETTINGS_FILE}")
+        except OSError as e:
+            logger.error(f"Could not persist settings: {e}")
+
+    def as_dict(self) -> dict:
+        return {
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "fetch_interval_minutes": self.fetch_interval_minutes,
+            "data_file": self.data_file,
+        }
 
 
 settings = Settings()

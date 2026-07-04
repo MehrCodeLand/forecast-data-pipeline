@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Weather Analysis</title>
+    <link rel="stylesheet" href="{{ADMIN_PATH}}/static/admin.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>Weather Admin</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ADMIN_PATH}}/dashboard" class="active">Dashboard</a></li>
+                <li><a href="{{ADMIN_PATH}}/report">Report</a></li>
+                <li><a href="#" id="logout-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <h2>Admin Dashboard</h2>
+            <div class="controls">
+                <button class="btn" id="collect-btn">Collect Now</button>
+                <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="card-grid">
+            <div class="card">
+                <h3>Scheduler</h3>
+                <div class="metric-value"><span id="scheduler-badge" class="badge badge-error">Unknown</span></div>
+                <p>Runs: <span id="sched-runs">--</span> | Failures: <span id="sched-failures">--</span></p>
+                <p>Last success: <span id="sched-last-success">--</span></p>
+                <p>Last error: <span id="sched-last-error">--</span></p>
+            </div>
+
+            <div class="card">
+                <h3>Collected Data</h3>
+                <div class="metric-value" id="total-records">--</div>
+                <p class="metric-unit">total records</p>
+                <p>First: <span id="first-record">--</span></p>
+                <p>Last: <span id="last-record">--</span></p>
+            </div>
+
+            <div class="card">
+                <h3>Last 24 Records</h3>
+                <div class="metric-value" id="avg-temp">--</div>
+                <p class="metric-unit">C average temperature</p>
+                <p>Avg wind: <span id="avg-wind">--</span> km/h</p>
+                <p>Peak wind: <span id="peak-wind">--</span> km/h</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Collection Settings</h3>
+            <p>Location and collection interval used by the scheduler. Changes apply immediately and persist across restarts.</p>
+            <form id="settings-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" id="latitude" step="0.000001" min="-90" max="90" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="longitude">Longitude</label>
+                        <input type="number" id="longitude" step="0.000001" min="-180" max="180" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="interval">Interval (minutes)</label>
+                        <input type="number" id="interval" min="1" max="1440" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="save-settings-btn">Save Settings</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Reports and Downloads</h3>
+            <p>View the full report in the browser or download the complete dataset for offline analysis.</p>
+            <div class="controls">
+                <a class="btn" href="{{ADMIN_PATH}}/report">View Full Report (HTML)</a>
+                <a class="btn" href="{{ADMIN_PATH}}/report/pdf">Download Report (PDF)</a>
+                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/csv">Download Data (CSV)</a>
+                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/json">Download Data (JSON)</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PATH = '{{ADMIN_PATH}}';
+
+        function fmt(value) {
+            return (value === null || value === undefined) ? '--' : value;
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            setTimeout(() => { message.style.display = 'none'; }, 6000);
+        }
+
+        async function adminRequest(endpoint, options = {}) {
+            const response = await fetch(`${ADMIN_PATH}${endpoint}`, options);
+            if (response.status === 401) {
+                window.location.href = ADMIN_PATH;
+                throw new Error('Not authenticated');
+            }
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.detail || `Request failed (${response.status})`);
+            }
+            return response.json();
+        }
+
+        async function loadOverview() {
+            try {
+                const overview = await adminRequest('/api/overview');
+
+                const badge = document.getElementById('scheduler-badge');
+                if (overview.scheduler.running) {
+                    badge.textContent = 'Running';
+                    badge.className = 'badge badge-success';
+                } else {
+                    badge.textContent = 'Stopped';
+                    badge.className = 'badge badge-error';
+                }
+                document.getElementById('sched-runs').textContent = fmt(overview.scheduler.runs);
+                document.getElementById('sched-failures').textContent = fmt(overview.scheduler.failures);
+                document.getElementById('sched-last-success').textContent = fmt(overview.scheduler.last_success_at);
+                document.getElementById('sched-last-error').textContent = fmt(overview.scheduler.last_error);
+
+                document.getElementById('total-records').textContent = fmt(overview.data.total_records);
+                document.getElementById('first-record').textContent = fmt(overview.data.first_record);
+                document.getElementById('last-record').textContent = fmt(overview.data.last_record);
+
+                const summary = overview.summary || {};
+                document.getElementById('avg-temp').textContent = fmt(summary.avg_temperature);
+                document.getElementById('avg-wind').textContent = fmt(summary.avg_windspeed);
+                document.getElementById('peak-wind').textContent = fmt(summary.peak_windspeed);
+
+                document.getElementById('latitude').value = overview.settings.latitude;
+                document.getElementById('longitude').value = overview.settings.longitude;
+                document.getElementById('interval').value = overview.settings.fetch_interval_minutes;
+            } catch (error) {
+                if (error.message !== 'Not authenticated') {
+                    showMessage(error.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('save-settings-btn');
+            btn.disabled = true;
+            try {
+                await adminRequest('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        latitude: parseFloat(document.getElementById('latitude').value),
+                        longitude: parseFloat(document.getElementById('longitude').value),
+                        fetch_interval_minutes: parseInt(document.getElementById('interval').value, 10)
+                    })
+                });
+                showMessage('Settings saved. The scheduler is using the new values.', 'success');
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('collect-btn').addEventListener('click', async function () {
+            const btn = this;
+            btn.disabled = true;
+            try {
+                await adminRequest('/api/collect-now', { method: 'POST' });
+                showMessage('Weather snapshot collected successfully.', 'success');
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', loadOverview);
+
+        document.getElementById('logout-link').addEventListener('click', async function (e) {
+            e.preventDefault();
+            await fetch(`${ADMIN_PATH}/api/logout`, { method: 'POST' });
+            window.location.href = ADMIN_PATH;
+        });
+
+        loadOverview();
+    </script>
+</body>
+</html>

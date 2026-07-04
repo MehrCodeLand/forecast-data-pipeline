@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Weather Analysis</title>
+    <link rel="stylesheet" href="{{ADMIN_PATH}}/static/admin.css">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>Weather Admin</h1>
+            <p class="subtitle">Sign in to manage the weather data pipeline</p>
+
+            <div id="message" class="message error"></div>
+
+            <form id="login-form">
+                <div class="form-field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autocomplete="username" required>
+                </div>
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn" id="login-btn">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PATH = '{{ADMIN_PATH}}';
+
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const message = document.getElementById('message');
+            btn.disabled = true;
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch(`${ADMIN_PATH}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = `${ADMIN_PATH}/dashboard`;
+                    return;
+                }
+
+                const body = await response.json().catch(() => ({}));
+                message.textContent = body.detail || 'Login failed. Please try again.';
+                message.style.display = 'block';
+            } catch (error) {
+                message.textContent = 'Cannot reach the server. Please try again.';
+                message.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

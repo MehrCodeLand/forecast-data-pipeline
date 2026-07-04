@@ -3,3 +3,4 @@ loguru
 pandas
 fastapi
 uvicorn
+fpdf2

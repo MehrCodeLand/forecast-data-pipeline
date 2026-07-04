@@ -13,12 +13,12 @@ async function loadTemperatureData() {
             apiRequest(`/temperature/delta?hours=${period}`)
         ]);
 
-        document.getElementById('avg-temp').textContent = avgData.average_temperature;
-        document.getElementById('temp-min').textContent = rangeData.temperature_range.min;
-        document.getElementById('temp-max').textContent = rangeData.temperature_range.max;
-        document.getElementById('temp-range-val').textContent = rangeData.temperature_range.range;
-        document.getElementById('rate-change').textContent = rateData.avg_rate_of_change;
-        document.getElementById('delta').textContent = deltaData.delta_per_hour;
+        document.getElementById('avg-temp').textContent = fmt(avgData.average_temperature);
+        document.getElementById('temp-min').textContent = fmt(rangeData.temperature_range?.min);
+        document.getElementById('temp-max').textContent = fmt(rangeData.temperature_range?.max);
+        document.getElementById('temp-range-val').textContent = fmt(rangeData.temperature_range?.range);
+        document.getElementById('rate-change').textContent = fmt(rateData.avg_rate_of_change);
+        document.getElementById('delta').textContent = fmt(deltaData.delta_per_hour);
         document.getElementById('last-updated').textContent = new Date().toLocaleString();
 
         showLoading(false);
