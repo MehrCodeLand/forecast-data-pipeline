@@ -3,60 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Analysis Dashboard</title>
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Weather data collection and analysis for cities around the world">
+    <title>Weather Watch</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h1>Weather Analysis</h1>
+                <h1 id="site-name">Weather Watch</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html" class="active">Dashboard</a></li>
-                <li><a href="temperature.html">Temperature</a></li>
-                <li><a href="wind.html">Wind</a></li>
-                <li><a href="data.html">Raw Data</a></li>
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="cities.html">Cities</a></li>
+                <li><a href="info.html">Info</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="container main-content">
-        <div class="header">
-            <h2>Weather Summary</h2>
-            <div class="controls">
-                <label for="period">Period (hours):</label>
-                <input type="number" id="period" value="24" min="1" max="100">
-                <button onclick="loadSummary()" class="btn">Refresh</button>
+        <section class="hero">
+            <h2 id="hero-tagline">Weather data collection and analysis, city by city</h2>
+            <p id="hero-intro">We continuously collect current weather conditions for cities around the world and turn them into clear, comparable analytics.</p>
+            <div class="hero-actions">
+                <a href="cities.html" class="btn">Explore Cities</a>
+                <a href="info.html" class="btn btn-secondary">About the Project</a>
             </div>
-        </div>
+        </section>
 
-        <div id="loading" class="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
 
-        <div id="summary-grid" class="card-grid">
-            <!-- Cards will be loaded here -->
-        </div>
+        <section>
+            <div class="section-header">
+                <h2>Cities We Track</h2>
+                <a href="cities.html" class="link-more">See all</a>
+            </div>
+            <div id="cities-preview" class="card-grid">
+                <div class="card"><p>Loading cities...</p></div>
+            </div>
+        </section>
 
-        <div class="card">
-            <h3>About This Dashboard</h3>
-            <p>This dashboard provides real-time weather analysis for Tehran, Iran. Data is collected hourly and analyzed using various metrics.</p>
-            <ul>
-                <li><strong>Temperature Analysis:</strong> Average, range, and rate of change</li>
-                <li><strong>Wind Analysis:</strong> Speed, direction, and variability</li>
-                <li><strong>Historical Data:</strong> Access to all collected data points</li>
-            </ul>
-        </div>
+        <section>
+            <h2 class="section-title">What You Will Find Here</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Temperature Analytics</h3>
+                    <p>Average temperature, minimum and maximum range, rate of change and hourly delta, computed over the most recent records of each city.</p>
+                </div>
+                <div class="card">
+                    <h3>Wind Analytics</h3>
+                    <p>Average and peak wind speed, dominant direction, direction variability and calm-period detection with a configurable threshold.</p>
+                </div>
+                <div class="card">
+                    <h3>Raw History</h3>
+                    <p>Every snapshot we collect is stored and browsable, so you can see exactly how conditions evolved over time.</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>How It Works</h3>
+                <p id="home-examples">For every city we track average temperature, temperature range and rate of change, wind speed and direction, calm periods, and more.</p>
+            </div>
+        </section>
     </div>
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Weather Analysis System | Tehran, Iran</p>
+            <p id="footer-text">Weather Analysis System</p>
         </div>
     </footer>
 
     <script src="config.js"></script>
     <script src="api.js"></script>
-    <script src="dashboard.js"></script>
+    <script src="home.js"></script>
 </body>
 </html>

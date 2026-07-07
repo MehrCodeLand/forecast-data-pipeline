@@ -14,7 +14,6 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="{{ADMIN_PATH}}/dashboard" class="active">Dashboard</a></li>
-                <li><a href="{{ADMIN_PATH}}/report">Report</a></li>
                 <li><a href="#" id="logout-link">Logout</a></li>
             </ul>
         </div>
@@ -24,7 +23,7 @@
         <div class="header">
             <h2>Admin Dashboard</h2>
             <div class="controls">
-                <button class="btn" id="collect-btn">Collect Now</button>
+                <button class="btn" id="collect-all-btn">Collect All Now</button>
                 <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
             </div>
         </div>
@@ -36,63 +35,131 @@
                 <h3>Scheduler</h3>
                 <div class="metric-value"><span id="scheduler-badge" class="badge badge-error">Unknown</span></div>
                 <p>Runs: <span id="sched-runs">--</span> | Failures: <span id="sched-failures">--</span></p>
-                <p>Last success: <span id="sched-last-success">--</span></p>
-                <p>Last error: <span id="sched-last-error">--</span></p>
+                <p>Last run: <span id="sched-last-run">--</span></p>
             </div>
 
             <div class="card">
-                <h3>Collected Data</h3>
-                <div class="metric-value" id="total-records">--</div>
-                <p class="metric-unit">total records</p>
-                <p>First: <span id="first-record">--</span></p>
-                <p>Last: <span id="last-record">--</span></p>
+                <h3>Cities Tracked</h3>
+                <div class="metric-value" id="city-count">--</div>
+                <p class="metric-unit">cities</p>
+                <p>Total records: <span id="total-records">--</span></p>
             </div>
 
             <div class="card">
-                <h3>Last 24 Records</h3>
-                <div class="metric-value" id="avg-temp">--</div>
-                <p class="metric-unit">C average temperature</p>
-                <p>Avg wind: <span id="avg-wind">--</span> km/h</p>
-                <p>Peak wind: <span id="peak-wind">--</span> km/h</p>
+                <h3>Collection Interval</h3>
+                <form id="settings-form">
+                    <div class="form-field">
+                        <label for="interval">Minutes between collections</label>
+                        <input type="number" id="interval" min="1" max="1440" required>
+                    </div>
+                    <br>
+                    <button type="submit" class="btn" id="save-settings-btn">Save Interval</button>
+                </form>
             </div>
         </div>
 
         <div class="card">
-            <h3>Collection Settings</h3>
-            <p>Location and collection interval used by the scheduler. Changes apply immediately and persist across restarts.</p>
-            <form id="settings-form">
+            <h3>Cities</h3>
+            <p>Every enabled city is collected on each scheduler run. Use the actions to collect immediately, open the full report, or download data per city.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Country</th>
+                            <th>Coordinates</th>
+                            <th>Records</th>
+                            <th>Last success</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cities-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Add City</h3>
+            <form id="add-city-form">
                 <div class="form-grid">
                     <div class="form-field">
-                        <label for="latitude">Latitude</label>
-                        <input type="number" id="latitude" step="0.000001" min="-90" max="90" required>
+                        <label for="city-name">City name</label>
+                        <input type="text" id="city-name" maxlength="80" required>
                     </div>
                     <div class="form-field">
-                        <label for="longitude">Longitude</label>
-                        <input type="number" id="longitude" step="0.000001" min="-180" max="180" required>
+                        <label for="city-country">Country</label>
+                        <input type="text" id="city-country" maxlength="80" required>
                     </div>
                     <div class="form-field">
-                        <label for="interval">Interval (minutes)</label>
-                        <input type="number" id="interval" min="1" max="1440" required>
+                        <label for="city-lat">Latitude</label>
+                        <input type="number" id="city-lat" step="0.000001" min="-90" max="90" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="city-lon">Longitude</label>
+                        <input type="number" id="city-lon" step="0.000001" min="-180" max="180" required>
                     </div>
                 </div>
-                <button type="submit" class="btn" id="save-settings-btn">Save Settings</button>
+                <button type="submit" class="btn" id="add-city-btn">Add City</button>
             </form>
         </div>
 
         <div class="card">
-            <h3>Reports and Downloads</h3>
-            <p>View the full report in the browser or download the complete dataset for offline analysis.</p>
-            <div class="controls">
-                <a class="btn" href="{{ADMIN_PATH}}/report">View Full Report (HTML)</a>
-                <a class="btn" href="{{ADMIN_PATH}}/report/pdf">Download Report (PDF)</a>
-                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/csv">Download Data (CSV)</a>
-                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/json">Download Data (JSON)</a>
-            </div>
+            <h3>Site Content</h3>
+            <p>This text is shown on the public site (main page and info page). Changes are visible to visitors immediately.</p>
+            <form id="content-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="c-site_name">Site name</label>
+                        <input type="text" id="c-site_name">
+                    </div>
+                    <div class="form-field">
+                        <label for="c-tagline">Tagline</label>
+                        <input type="text" id="c-tagline">
+                    </div>
+                    <div class="form-field">
+                        <label for="c-contact_email">Contact email</label>
+                        <input type="text" id="c-contact_email">
+                    </div>
+                    <div class="form-field">
+                        <label for="c-footer_text">Footer text</label>
+                        <input type="text" id="c-footer_text">
+                    </div>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-home_intro">Main page introduction</label>
+                    <textarea id="c-home_intro" rows="3"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-home_examples">Main page: what we measure (examples)</label>
+                    <textarea id="c-home_examples" rows="3"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-about_title">Info page title</label>
+                    <input type="text" id="c-about_title">
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-about_text">Info page: about the project</label>
+                    <textarea id="c-about_text" rows="4"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-mission_text">Info page: our mission</label>
+                    <textarea id="c-mission_text" rows="3"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="c-data_description">Info page: the data we collect</label>
+                    <textarea id="c-data_description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn" id="save-content-btn">Save Content</button>
+            </form>
         </div>
     </div>
 
     <script>
         const ADMIN_PATH = '{{ADMIN_PATH}}';
+        const CONTENT_FIELDS = ['site_name', 'tagline', 'contact_email', 'footer_text',
+            'home_intro', 'home_examples', 'about_title', 'about_text',
+            'mission_text', 'data_description'];
 
         function fmt(value) {
             return (value === null || value === undefined) ? '--' : value;
@@ -119,41 +186,197 @@
             return response.json();
         }
 
+        function cityRow(city) {
+            const tr = document.createElement('tr');
+
+            const status = city.enabled
+                ? '<span class="badge badge-success">Enabled</span>'
+                : '<span class="badge badge-error">Disabled</span>';
+            const error = city.last_error
+                ? `<br><small>${city.last_error}</small>` : '';
+
+            tr.innerHTML = `
+                <td>${city.name}</td>
+                <td>${city.country}</td>
+                <td>${city.latitude}, ${city.longitude}</td>
+                <td>${fmt(city.records)}</td>
+                <td>${fmt(city.last_success_at)}${error}</td>
+                <td>${status}</td>
+                <td class="actions-cell"></td>
+            `;
+
+            const actions = tr.querySelector('.actions-cell');
+
+            const collectBtn = document.createElement('button');
+            collectBtn.className = 'btn btn-small';
+            collectBtn.textContent = 'Collect';
+            collectBtn.onclick = () => collectCity(city.id, collectBtn);
+            actions.appendChild(collectBtn);
+
+            const reportLink = document.createElement('a');
+            reportLink.className = 'btn btn-small btn-secondary';
+            reportLink.textContent = 'Report';
+            reportLink.href = `${ADMIN_PATH}/report?city=${city.id}`;
+            actions.appendChild(reportLink);
+
+            const csvLink = document.createElement('a');
+            csvLink.className = 'btn btn-small btn-secondary';
+            csvLink.textContent = 'CSV';
+            csvLink.href = `${ADMIN_PATH}/api/download/csv?city=${city.id}`;
+            actions.appendChild(csvLink);
+
+            const jsonLink = document.createElement('a');
+            jsonLink.className = 'btn btn-small btn-secondary';
+            jsonLink.textContent = 'JSON';
+            jsonLink.href = `${ADMIN_PATH}/api/download/json?city=${city.id}`;
+            actions.appendChild(jsonLink);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn btn-small btn-secondary';
+            toggleBtn.textContent = city.enabled ? 'Disable' : 'Enable';
+            toggleBtn.onclick = () => toggleCity(city.id, !city.enabled, toggleBtn);
+            actions.appendChild(toggleBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-small btn-danger';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = () => deleteCity(city.id, city.name, deleteBtn);
+            actions.appendChild(deleteBtn);
+
+            return tr;
+        }
+
         async function loadOverview() {
             try {
                 const overview = await adminRequest('/api/overview');
 
                 const badge = document.getElementById('scheduler-badge');
-                if (overview.scheduler.running) {
-                    badge.textContent = 'Running';
-                    badge.className = 'badge badge-success';
-                } else {
-                    badge.textContent = 'Stopped';
-                    badge.className = 'badge badge-error';
-                }
+                badge.textContent = overview.scheduler.running ? 'Running' : 'Stopped';
+                badge.className = overview.scheduler.running
+                    ? 'badge badge-success' : 'badge badge-error';
                 document.getElementById('sched-runs').textContent = fmt(overview.scheduler.runs);
                 document.getElementById('sched-failures').textContent = fmt(overview.scheduler.failures);
-                document.getElementById('sched-last-success').textContent = fmt(overview.scheduler.last_success_at);
-                document.getElementById('sched-last-error').textContent = fmt(overview.scheduler.last_error);
-
-                document.getElementById('total-records').textContent = fmt(overview.data.total_records);
-                document.getElementById('first-record').textContent = fmt(overview.data.first_record);
-                document.getElementById('last-record').textContent = fmt(overview.data.last_record);
-
-                const summary = overview.summary || {};
-                document.getElementById('avg-temp').textContent = fmt(summary.avg_temperature);
-                document.getElementById('avg-wind').textContent = fmt(summary.avg_windspeed);
-                document.getElementById('peak-wind').textContent = fmt(summary.peak_windspeed);
-
-                document.getElementById('latitude').value = overview.settings.latitude;
-                document.getElementById('longitude').value = overview.settings.longitude;
+                document.getElementById('sched-last-run').textContent = fmt(overview.scheduler.last_run_at);
                 document.getElementById('interval').value = overview.settings.fetch_interval_minutes;
+
+                document.getElementById('city-count').textContent = overview.cities.length;
+                document.getElementById('total-records').textContent =
+                    overview.cities.reduce((sum, c) => sum + (c.records || 0), 0);
+
+                const tbody = document.getElementById('cities-tbody');
+                tbody.innerHTML = '';
+                overview.cities.forEach(city => tbody.appendChild(cityRow(city)));
             } catch (error) {
                 if (error.message !== 'Not authenticated') {
                     showMessage(error.message, 'error');
                 }
             }
         }
+
+        async function loadContent() {
+            try {
+                const content = await adminRequest('/api/content');
+                CONTENT_FIELDS.forEach(field => {
+                    const input = document.getElementById(`c-${field}`);
+                    if (input) input.value = content[field] || '';
+                });
+            } catch (error) {
+                if (error.message !== 'Not authenticated') {
+                    showMessage(error.message, 'error');
+                }
+            }
+        }
+
+        async function collectCity(cityId, btn) {
+            btn.disabled = true;
+            try {
+                await adminRequest(`/api/cities/${cityId}/collect-now`, { method: 'POST' });
+                showMessage(`Snapshot collected for ${cityId}.`, 'success');
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleCity(cityId, enabled, btn) {
+            btn.disabled = true;
+            try {
+                await adminRequest(`/api/cities/${cityId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteCity(cityId, cityName, btn) {
+            if (!window.confirm(`Delete ${cityName}? Its collected data file is kept on disk, but the city disappears from the site.`)) {
+                return;
+            }
+            btn.disabled = true;
+            try {
+                await adminRequest(`/api/cities/${cityId}`, { method: 'DELETE' });
+                showMessage(`${cityName} deleted.`, 'success');
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('add-city-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('add-city-btn');
+            btn.disabled = true;
+            try {
+                await adminRequest('/api/cities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('city-name').value,
+                        country: document.getElementById('city-country').value,
+                        latitude: parseFloat(document.getElementById('city-lat').value),
+                        longitude: parseFloat(document.getElementById('city-lon').value)
+                    })
+                });
+                showMessage('City added. It will be collected on the next scheduler run.', 'success');
+                this.reset();
+                await loadOverview();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('content-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('save-content-btn');
+            btn.disabled = true;
+            try {
+                const body = {};
+                CONTENT_FIELDS.forEach(field => {
+                    const input = document.getElementById(`c-${field}`);
+                    if (input) body[field] = input.value;
+                });
+                await adminRequest('/api/content', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                showMessage('Site content saved.', 'success');
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         document.getElementById('settings-form').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -164,12 +387,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        latitude: parseFloat(document.getElementById('latitude').value),
-                        longitude: parseFloat(document.getElementById('longitude').value),
                         fetch_interval_minutes: parseInt(document.getElementById('interval').value, 10)
                     })
                 });
-                showMessage('Settings saved. The scheduler is using the new values.', 'success');
+                showMessage('Interval saved. The scheduler is using the new value.', 'success');
                 await loadOverview();
             } catch (error) {
                 showMessage(error.message, 'error');
@@ -178,21 +399,25 @@
             }
         });
 
-        document.getElementById('collect-btn').addEventListener('click', async function () {
-            const btn = this;
-            btn.disabled = true;
+        document.getElementById('collect-all-btn').addEventListener('click', async function () {
+            this.disabled = true;
             try {
-                await adminRequest('/api/collect-now', { method: 'POST' });
-                showMessage('Weather snapshot collected successfully.', 'success');
+                const result = await adminRequest('/api/collect-now', { method: 'POST' });
+                const outcomes = Object.entries(result.results)
+                    .map(([id, ok]) => `${id}: ${ok ? 'ok' : 'failed'}`).join(', ');
+                showMessage(`Collection finished. ${outcomes}`, 'success');
                 await loadOverview();
             } catch (error) {
                 showMessage(error.message, 'error');
             } finally {
-                btn.disabled = false;
+                this.disabled = false;
             }
         });
 
-        document.getElementById('refresh-btn').addEventListener('click', loadOverview);
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loadOverview();
+            loadContent();
+        });
 
         document.getElementById('logout-link').addEventListener('click', async function (e) {
             e.preventDefault();
@@ -201,6 +426,7 @@
         });
 
         loadOverview();
+        loadContent();
     </script>
 </body>
 </html>

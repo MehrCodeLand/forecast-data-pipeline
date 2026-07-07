@@ -49,12 +49,43 @@ function getWindDirection(degrees) {
 }
 
 function formatDateTime(dateString) {
+    if (!dateString) {
+        return '--';
+    }
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Loads admin-managed site content and applies the shared parts (site name,
+// footer). Returns the content object so pages can render their own sections.
+async function loadSiteContent() {
+    try {
+        const content = await apiRequest('/content');
+        const siteName = document.getElementById('site-name');
+        if (siteName && content.site_name) {
+            siteName.textContent = content.site_name;
+        }
+        const footerText = document.getElementById('footer-text');
+        if (footerText && content.footer_text) {
+            footerText.textContent = content.footer_text;
+        }
+        return content;
+    } catch (error) {
+        return null;
+    }
+}
+
+// PWA: register the service worker so the site can be installed on phones
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(error => {
+            console.error('Service worker registration failed:', error);
+        });
     });
 }

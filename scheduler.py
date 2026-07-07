@@ -4,31 +4,30 @@ from typing import Dict, Optional
 
 from loguru import logger
 
+from cities import CityStore
 from config import settings
-from data_json_manager import JSONDataManager
 from fetch_weather import collect_weather_snapshot
 
 logger.add('logs/scheduler.txt', rotation="1 week")
 
 
 class WeatherScheduler:
-    """Collects weather data periodically inside the application process.
+    """Collects weather data for every enabled city inside the app process.
 
-    Replaces the old cron-based setup: the FastAPI app starts this scheduler
-    on startup and stops it on shutdown, so no external cron service is
-    needed and the collection status can be inspected over the API.
+    Runs as an asyncio background task started by the FastAPI lifespan; no
+    external cron service is needed and the per-city collection status can
+    be inspected over the API.
     """
 
-    def __init__(self, data_manager: JSONDataManager,
+    def __init__(self, city_store: CityStore,
                  interval_minutes: int = settings.fetch_interval_minutes):
-        self.data_manager = data_manager
+        self.city_store = city_store
         self.interval_seconds = interval_minutes * 60
         self._task: Optional[asyncio.Task] = None
         self.runs = 0
         self.failures = 0
         self.last_run_at: Optional[str] = None
-        self.last_success_at: Optional[str] = None
-        self.last_error: Optional[str] = None
+        self.city_status: Dict[str, Dict] = {}
 
     @property
     def running(self) -> bool:
@@ -62,22 +61,35 @@ class WeatherScheduler:
 
     async def _run_loop(self) -> None:
         while True:
-            await self.collect_now()
+            await self.collect_all()
             await asyncio.sleep(self.interval_seconds)
 
-    async def collect_now(self) -> bool:
-        """Run one collection immediately. Returns True on success."""
+    async def collect_all(self) -> Dict[str, bool]:
+        """Collect a snapshot for every enabled city. Returns per-city success."""
         self.runs += 1
         self.last_run_at = datetime.now(timezone.utc).isoformat()
+        results = {}
+        for city in self.city_store.enabled():
+            results[city["id"]] = await self.collect_city(city)
+        return results
+
+    async def collect_city(self, city: Dict) -> bool:
+        """Collect one snapshot for one city. Returns True on success."""
+        now = datetime.now(timezone.utc).isoformat()
+        status = self.city_status.setdefault(city["id"], {
+            "last_success_at": None, "last_error": None, "failures": 0,
+        })
         try:
-            await collect_weather_snapshot(self.data_manager)
-            self.last_success_at = self.last_run_at
-            self.last_error = None
+            await collect_weather_snapshot(
+                city["latitude"], city["longitude"], self.city_store.data_manager(city))
+            status["last_success_at"] = now
+            status["last_error"] = None
             return True
         except Exception as e:
             self.failures += 1
-            self.last_error = str(e)
-            logger.error(f"Scheduled weather collection failed: {e}")
+            status["failures"] += 1
+            status["last_error"] = str(e)
+            logger.error(f"Scheduled collection failed for {city['name']}: {e}")
             return False
 
     def status(self) -> Dict:
@@ -87,6 +99,5 @@ class WeatherScheduler:
             "runs": self.runs,
             "failures": self.failures,
             "last_run_at": self.last_run_at,
-            "last_success_at": self.last_success_at,
-            "last_error": self.last_error,
+            "cities": self.city_status,
         }

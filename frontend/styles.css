@@ -143,6 +143,109 @@ body {
     background-color: var(--border-color);
 }
 
+/* Hero (main page) */
+.hero {
+    text-align: center;
+    padding: 40px 20px 50px;
+}
+
+.hero h2 {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto 25px;
+    font-size: 1.05rem;
+}
+
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hero-actions .btn {
+    padding: 11px 22px;
+    text-decoration: none;
+}
+
+/* Sections */
+section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.section-header h2 {
+    font-size: 1.4rem;
+}
+
+.link-more {
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.link-more:hover {
+    text-decoration: underline;
+}
+
+.page-lead {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+
+.content-link {
+    color: var(--accent-purple);
+    text-decoration: none;
+}
+
+.content-link:hover {
+    text-decoration: underline;
+}
+
+/* City cards */
+.city-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.city-card:hover {
+    border-color: var(--accent-purple);
+    transform: translateY(-2px);
+}
+
+.city-card .city-country {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+}
+
+.city-card span {
+    color: var(--accent-purple);
+    font-weight: 600;
+}
+
 /* Cards */
 .card {
     background-color: var(--bg-secondary);
@@ -318,6 +421,18 @@ footer {
 @media (max-width: 480px) {
     .main-content {
         padding: 25px 10px;
+    }
+
+    .hero {
+        padding: 20px 5px 30px;
+    }
+
+    .hero h2 {
+        font-size: 1.5rem;
+    }
+
+    .hero-actions .btn {
+        flex: 1 1 auto;
     }
 
     .card {
