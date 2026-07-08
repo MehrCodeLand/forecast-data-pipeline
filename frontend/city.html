@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,10 +17,14 @@
                 <h1 id="site-name">Weather Watch</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="cities.html" class="active">Cities</a></li>
-                <li><a href="info.html">Info</a></li>
+                <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                <li><a href="cities.html" class="active" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
+            <div class="nav-actions">
+                <a id="donate-link" class="btn donate-btn" href="https://www.buymeacoffee.com" target="_blank" rel="noopener" data-i18n="donate">Buy me a coffee</a>
+                <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
+            </div>
         </div>
     </nav>
 
@@ -31,112 +35,112 @@
                 <p class="page-lead" id="city-meta">--</p>
             </div>
             <div class="controls">
-                <label for="period">Period (records):</label>
+                <label for="period" data-i18n="period_label">Period (records):</label>
                 <input type="number" id="period" value="24" min="1" max="500">
-                <button onclick="loadCityDashboard()" class="btn">Refresh</button>
+                <button onclick="loadCityDashboard()" class="btn" data-i18n="refresh">Refresh</button>
             </div>
         </div>
 
-        <div id="loading" class="loading">Loading...</div>
+        <div id="loading" class="loading" data-i18n="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
 
         <section>
-            <h2 class="section-title">Summary</h2>
+            <h2 class="section-title" data-i18n="summary">Summary</h2>
             <div id="summary-grid" class="card-grid"></div>
         </section>
 
         <section>
-            <h2 class="section-title">Temperature</h2>
+            <h2 class="section-title" data-i18n="temperature">Temperature</h2>
             <div class="card-grid">
                 <div class="card">
-                    <h3>Average</h3>
+                    <h3 data-i18n="average">Average</h3>
                     <div id="avg-temp" class="metric-value">--</div>
-                    <p class="metric-unit">degrees C</p>
+                    <p class="metric-unit" data-i18n="deg_c">degrees C</p>
                 </div>
                 <div class="card">
-                    <h3>Range</h3>
+                    <h3 data-i18n="range">Range</h3>
                     <div class="metric-detail">
-                        <p>Min: <span id="temp-min">--</span></p>
-                        <p>Max: <span id="temp-max">--</span></p>
-                        <p>Range: <span id="temp-range-val">--</span></p>
+                        <p><span data-i18n="min_label">Min:</span> <span id="temp-min">--</span></p>
+                        <p><span data-i18n="max_label">Max:</span> <span id="temp-max">--</span></p>
+                        <p><span data-i18n="range_label">Range:</span> <span id="temp-range-val">--</span></p>
                     </div>
                 </div>
                 <div class="card">
-                    <h3>Rate of Change</h3>
+                    <h3 data-i18n="rate_of_change">Rate of Change</h3>
                     <div id="rate-change" class="metric-value">--</div>
-                    <p class="metric-unit">degrees C / hour</p>
+                    <p class="metric-unit" data-i18n="deg_c_per_hour">degrees C / hour</p>
                 </div>
                 <div class="card">
-                    <h3>Delta per Hour</h3>
+                    <h3 data-i18n="delta_per_hour">Delta per Hour</h3>
                     <div id="delta" class="metric-value">--</div>
-                    <p class="metric-unit">degrees C / hour</p>
+                    <p class="metric-unit" data-i18n="deg_c_per_hour">degrees C / hour</p>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2 class="section-title">Wind</h2>
+            <h2 class="section-title" data-i18n="wind">Wind</h2>
             <div class="card-grid">
                 <div class="card">
-                    <h3>Average Speed</h3>
+                    <h3 data-i18n="avg_speed">Average Speed</h3>
                     <div id="avg-wind" class="metric-value">--</div>
-                    <p class="metric-unit">km/h</p>
+                    <p class="metric-unit" data-i18n="kmh">km/h</p>
                 </div>
                 <div class="card">
-                    <h3>Peak Speed</h3>
+                    <h3 data-i18n="peak_speed">Peak Speed</h3>
                     <div id="peak-wind" class="metric-value">--</div>
-                    <p class="metric-unit">km/h</p>
+                    <p class="metric-unit" data-i18n="kmh">km/h</p>
                 </div>
                 <div class="card">
-                    <h3>Dominant Direction</h3>
+                    <h3 data-i18n="dominant_direction">Dominant Direction</h3>
                     <div id="wind-direction" class="metric-value">--</div>
-                    <p class="metric-unit">degrees</p>
+                    <p class="metric-unit" data-i18n="degrees">degrees</p>
                     <p class="direction-text" id="direction-text">--</p>
                 </div>
                 <div class="card">
-                    <h3>Direction Variability</h3>
+                    <h3 data-i18n="direction_variability">Direction Variability</h3>
                     <div id="wind-variability" class="metric-value">--</div>
-                    <p class="metric-unit">std deviation</p>
+                    <p class="metric-unit" data-i18n="std_dev">std deviation</p>
                 </div>
             </div>
 
             <div class="card">
-                <h3>Calm Periods</h3>
+                <h3 data-i18n="calm_periods">Calm Periods</h3>
                 <div class="controls" style="margin-bottom: 15px;">
-                    <label for="calm-threshold">Threshold (km/h):</label>
+                    <label for="calm-threshold" data-i18n="threshold_label">Threshold (km/h):</label>
                     <input type="number" id="calm-threshold" value="5" min="0" step="0.5">
-                    <button onclick="loadCalmPeriods()" class="btn btn-secondary">Calculate</button>
+                    <button onclick="loadCalmPeriods()" class="btn btn-secondary" data-i18n="calculate">Calculate</button>
                 </div>
                 <div class="metric-detail">
-                    <p>Calm periods: <span id="calm-count">--</span></p>
-                    <p>Total periods: <span id="total-periods">--</span></p>
-                    <p>Calm percentage: <span id="calm-percentage">--</span>%</p>
+                    <p><span data-i18n="calm_count_label">Calm periods:</span> <span id="calm-count">--</span></p>
+                    <p><span data-i18n="total_periods_label">Total periods:</span> <span id="total-periods">--</span></p>
+                    <p><span data-i18n="calm_pct_label">Calm percentage:</span> <span id="calm-percentage">--</span></p>
                 </div>
             </div>
         </section>
 
         <section>
             <div class="section-header">
-                <h2>Recent Data</h2>
+                <h2 data-i18n="recent_data">Recent Data</h2>
                 <div class="controls">
-                    <label for="data-limit">Rows:</label>
+                    <label for="data-limit" data-i18n="rows_label">Rows:</label>
                     <input type="number" id="data-limit" value="25" min="1" max="500">
-                    <button onclick="loadCityData()" class="btn btn-secondary">Load</button>
+                    <button onclick="loadCityData()" class="btn btn-secondary" data-i18n="load">Load</button>
                 </div>
             </div>
             <div class="card">
-                <p>Total records: <span id="total-records">--</span> | Showing: <span id="showing-records">--</span></p>
+                <p><span data-i18n="total_records_label">Total records:</span> <span id="total-records">--</span> | <span data-i18n="showing_label">Showing:</span> <span id="showing-records">--</span></p>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Time</th>
-                                <th>Temperature (C)</th>
-                                <th>Wind (km/h)</th>
-                                <th>Direction</th>
-                                <th>Code</th>
-                                <th>Day/Night</th>
+                                <th data-i18n="th_id">ID</th>
+                                <th data-i18n="th_time">Time</th>
+                                <th data-i18n="th_temp">Temperature (C)</th>
+                                <th data-i18n="th_wind">Wind (km/h)</th>
+                                <th data-i18n="th_dir">Direction</th>
+                                <th data-i18n="th_code">Code</th>
+                                <th data-i18n="th_daynight">Day/Night</th>
                             </tr>
                         </thead>
                         <tbody id="data-tbody"></tbody>
@@ -153,6 +157,7 @@
     </footer>
 
     <script src="config.js"></script>
+    <script src="i18n.js"></script>
     <script src="api.js"></script>
     <script src="city.js"></script>
 </body>

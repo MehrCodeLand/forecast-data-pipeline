@@ -9,44 +9,44 @@ async function loadCityInfo() {
     document.title = `${city.name} - Weather Watch`;
     setText('city-name', `${city.name}, ${city.country}`);
     setText('city-meta',
-        `lat ${city.latitude}, lon ${city.longitude} | ${city.records} records collected | last update: ${formatDateTime(city.last_record)}`);
+        `${city.latitude}, ${city.longitude} | ${city.records} ${t('records_collected')} | ${t('last_update')} ${formatDateTime(city.last_record)}`);
     return city;
 }
 
 function summaryCards(summary) {
     return `
         <div class="card">
-            <h3>Temperature</h3>
+            <h3>${t('temperature')}</h3>
             <div class="metric-value">${fmt(summary.avg_temperature)}</div>
-            <p class="metric-unit">degrees C average</p>
+            <p class="metric-unit">${t('deg_c_avg')}</p>
             <div class="metric-detail">
-                <p>Min: <span>${fmt(summary.temp_range?.min)}</span></p>
-                <p>Max: <span>${fmt(summary.temp_range?.max)}</span></p>
+                <p>${t('min_label')} <span>${fmt(summary.temp_range?.min)}</span></p>
+                <p>${t('max_label')} <span>${fmt(summary.temp_range?.max)}</span></p>
             </div>
         </div>
         <div class="card">
-            <h3>Wind Speed</h3>
+            <h3>${t('wind_speed')}</h3>
             <div class="metric-value">${fmt(summary.avg_windspeed)}</div>
-            <p class="metric-unit">km/h average</p>
+            <p class="metric-unit">${t('kmh_avg')}</p>
             <div class="metric-detail">
-                <p>Peak: <span>${fmt(summary.peak_windspeed)} km/h</span></p>
+                <p>${t('peak_label')} <span>${fmt(summary.peak_windspeed)} km/h</span></p>
             </div>
         </div>
         <div class="card">
-            <h3>Wind Direction</h3>
+            <h3>${t('wind_direction')}</h3>
             <div class="metric-value">${fmt(summary.dominant_wind_direction)}</div>
-            <p class="metric-unit">degrees</p>
+            <p class="metric-unit">${t('degrees')}</p>
             <p class="direction-text">${getWindDirection(summary.dominant_wind_direction)}</p>
         </div>
         <div class="card">
-            <h3>Calm Periods</h3>
+            <h3>${t('calm_periods')}</h3>
             <div class="metric-value">${fmt(summary.calm_periods?.calm_percentage)}</div>
-            <p class="metric-unit">% calm time</p>
+            <p class="metric-unit">${t('pct_calm')}</p>
         </div>
         <div class="card">
-            <h3>Data Points</h3>
+            <h3>${t('data_points')}</h3>
             <div class="metric-value">${fmt(summary.data_points)}</div>
-            <p class="metric-unit">analyzed</p>
+            <p class="metric-unit">${t('analyzed')}</p>
         </div>
     `;
 }
@@ -123,7 +123,7 @@ async function loadCityData() {
                 <td>${fmt(row.windspeed)}</td>
                 <td>${fmt(row.winddirection)} (${getWindDirection(row.winddirection)})</td>
                 <td>${fmt(row.weathercode)}</td>
-                <td>${row.is_day ? 'Day' : 'Night'}</td>
+                <td>${row.is_day ? t('day') : t('night')}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -155,7 +155,7 @@ async function loadCityDashboard() {
         ]);
         showLoading(false);
     } catch (error) {
-        showError('Could not load this city. It may not exist, or the API is not running.');
+        showError(t('error_city'));
     }
 }
 

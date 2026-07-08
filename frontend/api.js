@@ -53,7 +53,8 @@ function formatDateTime(dateString) {
         return '--';
     }
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    const locale = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'fa') ? 'fa-IR' : 'en-US';
+    return date.toLocaleString(locale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -62,18 +63,26 @@ function formatDateTime(dateString) {
     });
 }
 
-// Loads admin-managed site content and applies the shared parts (site name,
-// footer). Returns the content object so pages can render their own sections.
+// Loads admin-managed site content in the current language and applies the
+// shared parts (site name, footer, donate link). Returns the language block
+// so pages can render their own sections.
 async function loadSiteContent() {
     try {
-        const content = await apiRequest('/content');
+        const full = await apiRequest('/content');
+        const content = full[CURRENT_LANG] || full.en || {};
+
         const siteName = document.getElementById('site-name');
         if (siteName && content.site_name) {
             siteName.textContent = content.site_name;
+            document.title = content.site_name;
         }
         const footerText = document.getElementById('footer-text');
         if (footerText && content.footer_text) {
             footerText.textContent = content.footer_text;
+        }
+        const donateLink = document.getElementById('donate-link');
+        if (donateLink && full.donate_url) {
+            donateLink.href = full.donate_url;
         }
         return content;
     } catch (error) {

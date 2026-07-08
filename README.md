@@ -19,6 +19,8 @@ Served by nginx (`frontend/`):
 
 The site is a **PWA**: it ships a web manifest, icons and a service worker (`sw.js`), so visitors can install it on their phone ("Add to Home Screen"). The app shell works offline and the last seen data is served when the network is gone.
 
+The site is **bilingual (Farsi/English)**: Farsi is the default (with full RTL layout and Persian dates); visitors switch languages with the navbar toggle and the choice is remembered. UI strings live in `frontend/i18n.js`; the admin-managed content is stored per language. A **"Buy me a coffee" donate button** is shown in the navbar; its target URL is set from the admin panel (Site Content section). The info page credits the developers (Mehrshad Asadi, Sepehr Sedigh) with LinkedIn links.
+
 ## Public API
 
 - `GET /cities` — tracked cities with latest snapshot
@@ -48,7 +50,7 @@ Default login is `admin` / `admin123`. **Change it before deploying**: pick a ne
 From the panel an admin can:
 
 - **Manage cities**: add any city in the world (name, country, coordinates), enable/disable, delete, or collect a snapshot immediately (per city or all at once)
-- **Manage site content**: every text block on the public main page and info page (site name, tagline, intro, about, mission, data description, contact, footer)
+- **Manage site content**: every text block on the public main page and info page (site name, tagline, intro, about, mission, data description, contact, footer), separately for Farsi and English, plus the donate (Buy me a coffee) URL
 - Change the global collection interval; applies immediately and persists to `data/app_settings.json`
 - View per-city full reports in the browser (HTML) or download them as PDF
 - Download each city's dataset as JSON or CSV

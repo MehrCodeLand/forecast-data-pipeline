@@ -26,6 +26,19 @@ body {
     line-height: 1.6;
 }
 
+/* Farsi (RTL): layouts flip automatically via flex/grid; give Persian text
+   a font stack that renders it well. */
+html[dir="rtl"] body {
+    font-family: Vazirmatn, 'Iranian Sans', Tahoma, 'Segoe UI', 'Noto Sans Arabic', Arial, sans-serif;
+    line-height: 1.9;
+}
+
+/* Keep numeric values like "17.5 C" in left-to-right order inside RTL text */
+html[dir="rtl"] .metric-value {
+    direction: ltr;
+    text-align: right;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -69,6 +82,61 @@ body {
 .nav-menu a:hover,
 .nav-menu a.active {
     color: var(--accent-purple);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Donate button (Buy me a coffee) */
+.btn.donate-btn {
+    background-color: #ffdd00;
+    color: #0d1117;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.btn.donate-btn:hover {
+    background-color: #e8c900;
+}
+
+/* Language toggle */
+.lang-btn {
+    min-width: 52px;
+    font-weight: 600;
+}
+
+/* Developers list (info page) */
+.dev-list {
+    list-style: none;
+    padding: 0;
+}
+
+.dev-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.dev-list li:last-child {
+    border-bottom: none;
+}
+
+.dev-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.btn-small {
+    padding: 5px 12px;
+    font-size: 0.8rem;
 }
 
 /* Main Content */
@@ -343,7 +411,7 @@ thead {
 
 th {
     padding: 12px;
-    text-align: left;
+    text-align: start;
     color: var(--text-primary);
     font-weight: 600;
     border-bottom: 2px solid var(--border-color);

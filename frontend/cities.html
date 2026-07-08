@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,20 +17,24 @@
                 <h1 id="site-name">Weather Watch</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="cities.html" class="active">Cities</a></li>
-                <li><a href="info.html">Info</a></li>
+                <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                <li><a href="cities.html" class="active" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
+            <div class="nav-actions">
+                <a id="donate-link" class="btn donate-btn" href="https://www.buymeacoffee.com" target="_blank" rel="noopener" data-i18n="donate">Buy me a coffee</a>
+                <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
+            </div>
         </div>
     </nav>
 
     <div class="container main-content">
         <div class="header">
-            <h2>Cities</h2>
+            <h2 data-i18n="cities_title">Cities</h2>
         </div>
-        <p class="page-lead">Pick a city to open its dashboard with temperature, wind and raw data analytics.</p>
+        <p class="page-lead" data-i18n="pick_city">Pick a city to open its dashboard with temperature, wind and raw data analytics.</p>
 
-        <div id="loading" class="loading">Loading...</div>
+        <div id="loading" class="loading" data-i18n="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
 
         <div id="cities-grid" class="card-grid"></div>
@@ -43,6 +47,7 @@
     </footer>
 
     <script src="config.js"></script>
+    <script src="i18n.js"></script>
     <script src="api.js"></script>
     <script src="cities.js"></script>
 </body>

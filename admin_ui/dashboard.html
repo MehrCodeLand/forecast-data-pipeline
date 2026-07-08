@@ -106,60 +106,74 @@
 
         <div class="card">
             <h3>Site Content</h3>
-            <p>This text is shown on the public site (main page and info page). Changes are visible to visitors immediately.</p>
+            <p>This text is shown on the public site (main page and info page) in both languages. The public site defaults to Farsi; visitors can switch to English. Changes are visible immediately.</p>
             <form id="content-form">
-                <div class="form-grid">
-                    <div class="form-field">
-                        <label for="c-site_name">Site name</label>
-                        <input type="text" id="c-site_name">
-                    </div>
-                    <div class="form-field">
-                        <label for="c-tagline">Tagline</label>
-                        <input type="text" id="c-tagline">
-                    </div>
-                    <div class="form-field">
-                        <label for="c-contact_email">Contact email</label>
-                        <input type="text" id="c-contact_email">
-                    </div>
-                    <div class="form-field">
-                        <label for="c-footer_text">Footer text</label>
-                        <input type="text" id="c-footer_text">
-                    </div>
-                </div>
                 <div class="form-field form-field-wide">
-                    <label for="c-home_intro">Main page introduction</label>
-                    <textarea id="c-home_intro" rows="3"></textarea>
+                    <label for="c-donate_url">Donate link (Buy me a coffee URL, shared by both languages)</label>
+                    <input type="text" id="c-donate_url" placeholder="https://www.buymeacoffee.com/yourname">
                 </div>
-                <div class="form-field form-field-wide">
-                    <label for="c-home_examples">Main page: what we measure (examples)</label>
-                    <textarea id="c-home_examples" rows="3"></textarea>
+
+                <div class="content-lang-tabs">
+                    <button type="button" class="btn btn-small content-tab active" data-lang="fa">Farsi</button>
+                    <button type="button" class="btn btn-small btn-secondary content-tab" data-lang="en">English</button>
                 </div>
-                <div class="form-field form-field-wide">
-                    <label for="c-about_title">Info page title</label>
-                    <input type="text" id="c-about_title">
-                </div>
-                <div class="form-field form-field-wide">
-                    <label for="c-about_text">Info page: about the project</label>
-                    <textarea id="c-about_text" rows="4"></textarea>
-                </div>
-                <div class="form-field form-field-wide">
-                    <label for="c-mission_text">Info page: our mission</label>
-                    <textarea id="c-mission_text" rows="3"></textarea>
-                </div>
-                <div class="form-field form-field-wide">
-                    <label for="c-data_description">Info page: the data we collect</label>
-                    <textarea id="c-data_description" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn" id="save-content-btn">Save Content</button>
+
+                <div id="content-fields"></div>
+
+                <button type="submit" class="btn" id="save-content-btn">Save Content (both languages)</button>
             </form>
         </div>
     </div>
 
     <script>
         const ADMIN_PATH = '{{ADMIN_PATH}}';
-        const CONTENT_FIELDS = ['site_name', 'tagline', 'contact_email', 'footer_text',
-            'home_intro', 'home_examples', 'about_title', 'about_text',
-            'mission_text', 'data_description'];
+        const CONTENT_FIELD_DEFS = [
+            { key: 'site_name', label: 'Site name', rows: 0 },
+            { key: 'tagline', label: 'Tagline', rows: 0 },
+            { key: 'contact_email', label: 'Contact email', rows: 0 },
+            { key: 'footer_text', label: 'Footer text', rows: 0 },
+            { key: 'home_intro', label: 'Main page introduction', rows: 3 },
+            { key: 'home_examples', label: 'Main page: what we measure (examples)', rows: 3 },
+            { key: 'about_title', label: 'Info page title', rows: 0 },
+            { key: 'about_text', label: 'Info page: about the project', rows: 4 },
+            { key: 'mission_text', label: 'Info page: our mission', rows: 3 },
+            { key: 'data_description', label: 'Info page: the data we collect', rows: 3 }
+        ];
+        const CONTENT_LANGS = ['fa', 'en'];
+
+        function buildContentFields() {
+            const wrapper = document.getElementById('content-fields');
+            CONTENT_LANGS.forEach(lang => {
+                const block = document.createElement('div');
+                block.id = `content-block-${lang}`;
+                block.style.display = lang === 'fa' ? 'block' : 'none';
+                CONTENT_FIELD_DEFS.forEach(def => {
+                    const field = document.createElement('div');
+                    field.className = 'form-field form-field-wide';
+                    const dir = lang === 'fa' ? ' dir="rtl"' : '';
+                    const input = def.rows
+                        ? `<textarea id="c-${lang}-${def.key}" rows="${def.rows}"${dir}></textarea>`
+                        : `<input type="text" id="c-${lang}-${def.key}"${dir}>`;
+                    field.innerHTML = `<label for="c-${lang}-${def.key}">${def.label} (${lang.toUpperCase()})</label>${input}`;
+                    block.appendChild(field);
+                });
+                wrapper.appendChild(block);
+            });
+
+            document.querySelectorAll('.content-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.content-tab').forEach(other => {
+                        other.classList.toggle('active', other === tab);
+                        other.classList.toggle('btn-secondary', other !== tab);
+                    });
+                    CONTENT_LANGS.forEach(lang => {
+                        document.getElementById(`content-block-${lang}`).style.display =
+                            lang === tab.dataset.lang ? 'block' : 'none';
+                    });
+                });
+            });
+        }
+        buildContentFields();
 
         function fmt(value) {
             return (value === null || value === undefined) ? '--' : value;
@@ -276,9 +290,13 @@
         async function loadContent() {
             try {
                 const content = await adminRequest('/api/content');
-                CONTENT_FIELDS.forEach(field => {
-                    const input = document.getElementById(`c-${field}`);
-                    if (input) input.value = content[field] || '';
+                document.getElementById('c-donate_url').value = content.donate_url || '';
+                CONTENT_LANGS.forEach(lang => {
+                    const block = content[lang] || {};
+                    CONTENT_FIELD_DEFS.forEach(def => {
+                        const input = document.getElementById(`c-${lang}-${def.key}`);
+                        if (input) input.value = block[def.key] || '';
+                    });
                 });
             } catch (error) {
                 if (error.message !== 'Not authenticated') {
@@ -360,17 +378,20 @@
             const btn = document.getElementById('save-content-btn');
             btn.disabled = true;
             try {
-                const body = {};
-                CONTENT_FIELDS.forEach(field => {
-                    const input = document.getElementById(`c-${field}`);
-                    if (input) body[field] = input.value;
+                const body = { donate_url: document.getElementById('c-donate_url').value };
+                CONTENT_LANGS.forEach(lang => {
+                    body[lang] = {};
+                    CONTENT_FIELD_DEFS.forEach(def => {
+                        const input = document.getElementById(`c-${lang}-${def.key}`);
+                        if (input) body[lang][def.key] = input.value;
+                    });
                 });
                 await adminRequest('/api/content', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                showMessage('Site content saved.', 'success');
+                showMessage('Site content saved for both languages.', 'success');
             } catch (error) {
                 showMessage(error.message, 'error');
             } finally {

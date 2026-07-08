@@ -49,16 +49,9 @@ class SettingsRequest(BaseModel):
 
 
 class ContentRequest(BaseModel):
-    site_name: Optional[str] = None
-    tagline: Optional[str] = None
-    home_intro: Optional[str] = None
-    home_examples: Optional[str] = None
-    about_title: Optional[str] = None
-    about_text: Optional[str] = None
-    mission_text: Optional[str] = None
-    data_description: Optional[str] = None
-    contact_email: Optional[str] = None
-    footer_text: Optional[str] = None
+    donate_url: Optional[str] = None
+    en: Optional[Dict[str, str]] = None
+    fa: Optional[Dict[str, str]] = None
 
 
 def _page(name: str) -> HTMLResponse:
