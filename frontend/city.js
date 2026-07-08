@@ -13,8 +13,18 @@ async function loadCityInfo() {
     return city;
 }
 
-function summaryCards(summary) {
+function metricCard(title, value, unit) {
     return `
+        <div class="card">
+            <h3>${title}</h3>
+            <div class="metric-value">${fmt(value)}</div>
+            <p class="metric-unit">${unit}</p>
+        </div>
+    `;
+}
+
+function summaryCards(summary) {
+    let cards = `
         <div class="card">
             <h3>${t('temperature')}</h3>
             <div class="metric-value">${fmt(summary.avg_temperature)}</div>
@@ -49,11 +59,102 @@ function summaryCards(summary) {
             <p class="metric-unit">${t('analyzed')}</p>
         </div>
     `;
+
+    // Optional metrics appear only once records carrying them have been
+    // collected, so summaries over legacy-only data are unchanged.
+    if (summary.avg_apparent_temperature !== undefined) {
+        cards += metricCard(t('feels_like'), summary.avg_apparent_temperature, t('deg_c_avg'));
+    }
+    if (summary.avg_humidity !== undefined) {
+        cards += metricCard(t('humidity'), summary.avg_humidity, t('pct'));
+    }
+    if (summary.total_precipitation !== undefined) {
+        cards += metricCard(t('precipitation'), summary.total_precipitation, t('mm_total'));
+    }
+    if (summary.avg_pressure !== undefined) {
+        cards += metricCard(t('pressure'), summary.avg_pressure, t('hpa'));
+    }
+    return cards;
+}
+
+function shortTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    const locale = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'fa') ? 'fa-IR' : 'en-US';
+    return date.toLocaleString(locale, {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
 }
 
 async function loadSummary(period) {
     const result = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}/summary?period=${period}`);
     document.getElementById('summary-grid').innerHTML = summaryCards(result.summary);
+}
+
+async function loadCharts(period) {
+    try {
+        const data = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/data?limit=${Math.max(period, 2)}`);
+        // API returns newest-first; charts read oldest -> newest.
+        const chrono = [...data.data].reverse();
+
+        const tempPoints = chrono.map(r => ({
+            label: shortTime(r.time),
+            y: typeof r.temperature === 'number' ? r.temperature : null
+        }));
+        const windPoints = chrono.map(r => ({
+            label: shortTime(r.time),
+            y: typeof r.windspeed === 'number' ? r.windspeed : null
+        }));
+
+        renderLineChart(document.getElementById('temp-chart'), tempPoints,
+            { color: '#f0883e', unit: 'C', emptyText: t('chart_empty') });
+        renderLineChart(document.getElementById('wind-chart'), windPoints,
+            { color: '#58a6ff', unit: 'km/h', emptyText: t('chart_empty') });
+    } catch (error) {
+        console.error('Failed to load charts:', error);
+    }
+}
+
+function recordCard(title, rec, unit) {
+    if (!rec) return '';
+    return `
+        <div class="card">
+            <h3>${title}</h3>
+            <div class="metric-value">${fmt(rec.value)}${unit ? ' ' + unit : ''}</div>
+            <p class="metric-unit">${formatDateTime(rec.timestamp || rec.time)}</p>
+        </div>
+    `;
+}
+
+async function loadRecords() {
+    try {
+        const thresholdEl = document.getElementById('calm-threshold');
+        const threshold = thresholdEl ? thresholdEl.value : 5;
+        const res = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/records?threshold=${threshold}`);
+        const r = res.records;
+
+        let html = '';
+        html += recordCard(t('hottest'), r.hottest, 'C');
+        html += recordCard(t('coldest'), r.coldest, 'C');
+        html += recordCard(t('windiest'), r.windiest, 'km/h');
+        if (r.longest_calm_streak) {
+            html += `
+                <div class="card">
+                    <h3>${t('longest_calm')}</h3>
+                    <div class="metric-value">${fmt(r.longest_calm_streak.records)}</div>
+                    <p class="metric-unit">${t('consecutive_records')}</p>
+                </div>
+            `;
+        }
+        if (r.wettest) html += recordCard(t('wettest'), r.wettest, 'mm');
+        if (r.most_humid) html += recordCard(t('most_humid'), r.most_humid, '%');
+
+        document.getElementById('records-grid').innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load records:', error);
+    }
 }
 
 async function loadTemperature(period) {
@@ -148,6 +249,8 @@ async function loadCityDashboard() {
         await loadCityInfo();
         await Promise.allSettled([
             loadSummary(period),
+            loadCharts(period),
+            loadRecords(),
             loadTemperature(period),
             loadWind(period),
             loadCalmPeriods(),

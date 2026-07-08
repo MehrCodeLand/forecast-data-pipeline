@@ -288,6 +288,41 @@ section {
     text-decoration: underline;
 }
 
+/* Charts */
+.chart-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.chart-container {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.chart {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* charts always read left-to-right, even on RTL pages */
+    direction: ltr;
+}
+
+.chart-grid-line,
+.chart-grid {
+    stroke: var(--border-color);
+    stroke-width: 1;
+}
+
+.chart-axis {
+    fill: var(--text-secondary);
+    font-size: 11px;
+}
+
+.chart-empty {
+    color: var(--text-secondary);
+    padding: 30px 10px;
+    text-align: center;
+}
+
 /* City cards */
 .city-card {
     display: block;

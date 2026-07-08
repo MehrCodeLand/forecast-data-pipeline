@@ -54,7 +54,7 @@ async def build_report_data(city: Dict, data_manager: JSONDataManager,
 def _summary_rows(summary: Dict) -> List:
     temp_range = summary.get("temp_range") or {}
     calm = summary.get("calm_periods") or {}
-    return [
+    rows = [
         ("Average temperature", f'{summary.get("avg_temperature", "-")} C'),
         ("Temperature min / max", f'{temp_range.get("min", "-")} / {temp_range.get("max", "-")} C'),
         ("Temperature range", f'{temp_range.get("range", "-")} C'),
@@ -66,6 +66,16 @@ def _summary_rows(summary: Dict) -> List:
                          f' ({calm.get("calm_percentage", "-")}%)'),
         ("Data points analysed", str(summary.get("data_points", "-"))),
     ]
+    # Optional metrics only appear once such data has been collected.
+    if "avg_apparent_temperature" in summary:
+        rows.append(("Average feels-like temperature", f'{summary["avg_apparent_temperature"]} C'))
+    if "avg_humidity" in summary:
+        rows.append(("Average humidity", f'{summary["avg_humidity"]} %'))
+    if "total_precipitation" in summary:
+        rows.append(("Total precipitation", f'{summary["total_precipitation"]} mm'))
+    if "avg_pressure" in summary:
+        rows.append(("Average surface pressure", f'{summary["avg_pressure"]} hPa'))
+    return rows
 
 
 def render_report_html(report: Dict, admin_path: str) -> str:

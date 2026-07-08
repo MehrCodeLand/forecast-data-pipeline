@@ -10,14 +10,45 @@ from data_json_manager import JSONDataManager
 logger.add('logs/fetch.txt', rotation="1 week")
 
 
+# Extra "current" fields requested from Open-Meteo, mapped to the stable
+# key names we store. Records collected before these were added simply lack
+# the keys; every reader must treat them as optional.
+EXTRA_FIELD_MAP = {
+    "relative_humidity_2m": "humidity",
+    "apparent_temperature": "apparent_temperature",
+    "precipitation": "precipitation",
+    "surface_pressure": "pressure",
+}
+
+
 async def fetch_current_weather(lat: float, lon: float) -> Dict:
-    """Fetch the current weather block from the Open-Meteo API."""
-    params = {"latitude": lat, "longitude": lon, "current_weather": "true"}
+    """Fetch the current weather from Open-Meteo.
+
+    Returns the classic ``current_weather`` block (temperature, windspeed,
+    winddirection, weathercode, is_day, time, interval) plus, when the API
+    provides them, the extra fields in EXTRA_FIELD_MAP. Existing keys are
+    never renamed, so old stored records remain fully compatible.
+    """
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current_weather": "true",
+        "current": ",".join(EXTRA_FIELD_MAP.keys()),
+    }
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(settings.api_url, params=params)
             response.raise_for_status()
-            return response.json()["current_weather"]
+            payload = response.json()
+            snapshot = dict(payload["current_weather"])
+
+            current = payload.get("current", {})
+            for api_key, stored_key in EXTRA_FIELD_MAP.items():
+                value = current.get(api_key)
+                if value is not None:
+                    snapshot[stored_key] = value
+
+            return snapshot
     except httpx.HTTPError as e:
         logger.error(f"Error fetching weather data: {e}")
         raise
