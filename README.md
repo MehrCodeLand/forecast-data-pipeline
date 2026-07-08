@@ -21,12 +21,22 @@ The site is a **PWA**: it ships a web manifest, icons and a service worker (`sw.
 
 The site is **bilingual (Farsi/English)**: Farsi is the default (with full RTL layout and Persian dates); visitors switch languages with the navbar toggle and the choice is remembered. UI strings live in `frontend/i18n.js`; the admin-managed content is stored per language. A **"Buy me a coffee" donate button** is shown in the navbar; its target URL is set from the admin panel (Site Content section). The info page credits the developers (Mehrshad Asadi, Sepehr Sedigh) with LinkedIn links.
 
+## What we collect per snapshot
+
+Each snapshot stores the classic fields — temperature, wind speed, wind direction, day/night flag and weather code — plus, when the API provides them, **humidity, apparent ("feels like") temperature, precipitation and surface pressure**. These extra fields were added later: existing keys are never renamed, so records collected before the fields existed remain fully readable and every metric that uses a new field simply ignores records that lack it. No migration of old data is needed.
+
+## Charts and records
+
+- Each city dashboard shows **time-series charts** (temperature and wind over the selected window), drawn as dependency-free inline SVG that reads left-to-right even on the RTL Farsi site.
+- Each city has an all-time **Records & Milestones** section: hottest, coldest and windiest readings, longest calm streak, and (once such data exists) wettest and most-humid readings — computed over the city's entire collected history.
+
 ## Public API
 
 - `GET /cities` — tracked cities with latest snapshot
 - `GET /cities/{id}` — city detail
 - `GET /cities/{id}/data?limit=` — raw records, newest first
-- `GET /cities/{id}/summary?period=`
+- `GET /cities/{id}/summary?period=` — includes optional humidity/feels-like/precipitation/pressure when present
+- `GET /cities/{id}/records?threshold=` — all-time records and milestones
 - `GET /cities/{id}/temperature/average|range|rate-of-change|delta`
 - `GET /cities/{id}/wind/average-speed|peak-speed|dominant-direction|direction-variability|calm-periods`
 - `GET /content` — admin-managed site content

@@ -67,6 +67,7 @@ async def root():
             "city": "/cities/{city_id}",
             "city_data": "/cities/{city_id}/data",
             "city_summary": "/cities/{city_id}/summary",
+            "city_records": "/cities/{city_id}/records",
             "city_temperature": "/cities/{city_id}/temperature/*",
             "city_wind": "/cities/{city_id}/wind/*",
         }
@@ -158,6 +159,16 @@ async def city_summary(city_id: str,
     except Exception as e:
         logger.error(f"Error in city_summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/cities/{city_id}/records")
+async def city_records(city_id: str,
+                       threshold: float = Query(5.0, ge=0, description="Calm windspeed threshold")):
+    city = get_city_or_404(city_id)
+    result = await analyser_for(city).get_records(calm_threshold=threshold)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No data available for this city yet")
+    return {"city": city["id"], "records": result}
 
 
 @app.get("/cities/{city_id}/temperature/average")

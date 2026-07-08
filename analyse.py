@@ -33,6 +33,48 @@ class Analyse:
 
         return data[-period:]
 
+    @staticmethod
+    def _values(records: List[Dict], field: str) -> List[float]:
+        """Values of `field` from records that actually have it.
+
+        Older records collected before a field existed simply omit it, so
+        every optional metric ignores the records that lack the field
+        instead of raising a KeyError.
+        """
+        return [r[field] for r in records
+                if isinstance(r.get(field), (int, float))]
+
+    async def get_optional_avg(self, field: str, period: int) -> Optional[float]:
+        """Average of an optional numeric field over the recent records.
+
+        Returns None when no record in the window carries the field (e.g.
+        only legacy data has been collected so far)."""
+        try:
+            records = await self._recent_records(period)
+            if not records:
+                return None
+            values = self._values(records, field)
+            if not values:
+                return None
+            return round(sum(values) / len(values), 2)
+        except Exception as e:
+            logger.error(f"Error in get_optional_avg({field}): {e}")
+            return None
+
+    async def get_optional_sum(self, field: str, period: int) -> Optional[float]:
+        """Total of an optional numeric field (e.g. precipitation)."""
+        try:
+            records = await self._recent_records(period)
+            if not records:
+                return None
+            values = self._values(records, field)
+            if not values:
+                return None
+            return round(sum(values), 2)
+        except Exception as e:
+            logger.error(f"Error in get_optional_sum({field}): {e}")
+            return None
+
     async def get_avg(self, period: int) -> Optional[float]:
         try:
             records = await self._recent_records(period)
@@ -196,7 +238,7 @@ class Analyse:
 
             period = len(records)
 
-            return {
+            summary = {
                 "avg_temperature": await self.get_avg(period),
                 "temp_range": await self.get_temperature_range(period),
                 "avg_windspeed": await self.get_avg_windspeed(period),
@@ -204,8 +246,90 @@ class Analyse:
                 "dominant_wind_direction": await self.get_dominant_wind_direction(period),
                 "wind_variability": await self.get_wind_direction_variability(period),
                 "calm_periods": await self.get_calm_periods(period),
-                "data_points": period
+                "data_points": period,
             }
+
+            # Optional metrics: only included when the window actually has
+            # records carrying the field, so summaries over legacy-only data
+            # stay unchanged.
+            optional = {
+                "avg_humidity": await self.get_optional_avg("humidity", period),
+                "avg_apparent_temperature": await self.get_optional_avg("apparent_temperature", period),
+                "avg_pressure": await self.get_optional_avg("pressure", period),
+                "total_precipitation": await self.get_optional_sum("precipitation", period),
+            }
+            summary.update({k: v for k, v in optional.items() if v is not None})
+
+            return summary
         except Exception as e:
             logger.error(f"Error in get_weather_summary: {e}")
+            return None
+
+    async def get_records(self, calm_threshold: float = 5.0) -> Optional[Dict]:
+        """All-time records and milestones over the city's full history.
+
+        Computed over every stored record (not just a recent window), so the
+        highlights grow more interesting as history accumulates.
+        """
+        try:
+            data = await self.json_manager.read_data()
+            if not data:
+                return None
+
+            def extreme(field: str, pick):
+                candidates = [r for r in data if isinstance(r.get(field), (int, float))]
+                if not candidates:
+                    return None
+                record = pick(candidates, key=lambda r: r[field])
+                return {
+                    "value": record[field],
+                    "timestamp": record.get("timestamp"),
+                    "time": record.get("time"),
+                }
+
+            # Longest run of consecutive records below the calm threshold.
+            longest_calm = 0
+            current_calm = 0
+            calm_start = None
+            best_calm_start = None
+            best_calm_end = None
+            for r in data:
+                speed = r.get("windspeed")
+                if isinstance(speed, (int, float)) and speed < calm_threshold:
+                    if current_calm == 0:
+                        calm_start = r.get("timestamp")
+                    current_calm += 1
+                    if current_calm > longest_calm:
+                        longest_calm = current_calm
+                        best_calm_start = calm_start
+                        best_calm_end = r.get("timestamp")
+                else:
+                    current_calm = 0
+
+            result = {
+                "total_records": len(data),
+                "first_record": data[0].get("timestamp"),
+                "last_record": data[-1].get("timestamp"),
+                "hottest": extreme("temperature", max),
+                "coldest": extreme("temperature", min),
+                "windiest": extreme("windspeed", max),
+                "longest_calm_streak": {
+                    "records": longest_calm,
+                    "threshold": calm_threshold,
+                    "start": best_calm_start,
+                    "end": best_calm_end,
+                },
+            }
+
+            # Optional records only appear once such data has been collected.
+            wettest = extreme("precipitation", max)
+            if wettest is not None and wettest["value"] > 0:
+                result["wettest"] = wettest
+            most_humid = extreme("humidity", max)
+            if most_humid is not None:
+                result["most_humid"] = most_humid
+
+            return result
+        except Exception as e:
+            logger.error(f"Error in get_records: {e}")
             return None

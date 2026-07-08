@@ -50,6 +50,26 @@
         </section>
 
         <section>
+            <h2 class="section-title" data-i18n="trends">Trends</h2>
+            <div class="card-grid chart-grid">
+                <div class="card">
+                    <h3 data-i18n="temp_trend">Temperature over time</h3>
+                    <div id="temp-chart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <h3 data-i18n="wind_trend">Wind speed over time</h3>
+                    <div id="wind-chart" class="chart-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title" data-i18n="records_milestones">Records &amp; Milestones</h2>
+            <p class="page-lead" data-i18n="records_note">All-time highlights computed over this city's full collected history.</p>
+            <div id="records-grid" class="card-grid"></div>
+        </section>
+
+        <section>
             <h2 class="section-title" data-i18n="temperature">Temperature</h2>
             <div class="card-grid">
                 <div class="card">
@@ -159,6 +179,7 @@
     <script src="config.js"></script>
     <script src="i18n.js"></script>
     <script src="api.js"></script>
+    <script src="chart.js"></script>
     <script src="city.js"></script>
 </body>
 </html>
