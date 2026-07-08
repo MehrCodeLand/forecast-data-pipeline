@@ -253,6 +253,18 @@ textarea:focus {
     flex-wrap: wrap;
 }
 
+.content-lang-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.content-tab.active {
+    background-color: var(--accent-purple);
+    color: #ffffff;
+    border: none;
+}
+
 /* Tables */
 .table-container {
     overflow-x: auto;

@@ -1,7 +1,7 @@
 async function loadInfo() {
     const content = await loadSiteContent();
     if (!content) {
-        showError('Could not load site content. Please check if the API is running.');
+        showError(t('error_content'));
         return;
     }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,10 +18,14 @@
                 <h1 id="site-name">Weather Watch</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="cities.html">Cities</a></li>
-                <li><a href="info.html">Info</a></li>
+                <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
+                <li><a href="cities.html" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
+            <div class="nav-actions">
+                <a id="donate-link" class="btn donate-btn" href="https://www.buymeacoffee.com" target="_blank" rel="noopener" data-i18n="donate">Buy me a coffee</a>
+                <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
+            </div>
         </div>
     </nav>
 
@@ -30,8 +34,8 @@
             <h2 id="hero-tagline">Weather data collection and analysis, city by city</h2>
             <p id="hero-intro">We continuously collect current weather conditions for cities around the world and turn them into clear, comparable analytics.</p>
             <div class="hero-actions">
-                <a href="cities.html" class="btn">Explore Cities</a>
-                <a href="info.html" class="btn btn-secondary">About the Project</a>
+                <a href="cities.html" class="btn" data-i18n="explore_cities">Explore Cities</a>
+                <a href="info.html" class="btn btn-secondary" data-i18n="about_project">About the Project</a>
             </div>
         </section>
 
@@ -39,32 +43,32 @@
 
         <section>
             <div class="section-header">
-                <h2>Cities We Track</h2>
-                <a href="cities.html" class="link-more">See all</a>
+                <h2 data-i18n="cities_we_track">Cities We Track</h2>
+                <a href="cities.html" class="link-more" data-i18n="see_all">See all</a>
             </div>
             <div id="cities-preview" class="card-grid">
-                <div class="card"><p>Loading cities...</p></div>
+                <div class="card"><p data-i18n="loading">Loading...</p></div>
             </div>
         </section>
 
         <section>
-            <h2 class="section-title">What You Will Find Here</h2>
+            <h2 class="section-title" data-i18n="what_you_find">What You Will Find Here</h2>
             <div class="card-grid">
                 <div class="card">
-                    <h3>Temperature Analytics</h3>
-                    <p>Average temperature, minimum and maximum range, rate of change and hourly delta, computed over the most recent records of each city.</p>
+                    <h3 data-i18n="temp_analytics">Temperature Analytics</h3>
+                    <p data-i18n="temp_analytics_desc">Average temperature, minimum and maximum range, rate of change and hourly delta, computed over the most recent records of each city.</p>
                 </div>
                 <div class="card">
-                    <h3>Wind Analytics</h3>
-                    <p>Average and peak wind speed, dominant direction, direction variability and calm-period detection with a configurable threshold.</p>
+                    <h3 data-i18n="wind_analytics">Wind Analytics</h3>
+                    <p data-i18n="wind_analytics_desc">Average and peak wind speed, dominant direction, direction variability and calm-period detection with a configurable threshold.</p>
                 </div>
                 <div class="card">
-                    <h3>Raw History</h3>
-                    <p>Every snapshot we collect is stored and browsable, so you can see exactly how conditions evolved over time.</p>
+                    <h3 data-i18n="raw_history">Raw History</h3>
+                    <p data-i18n="raw_history_desc">Every snapshot we collect is stored and browsable, so you can see exactly how conditions evolved over time.</p>
                 </div>
             </div>
             <div class="card">
-                <h3>How It Works</h3>
+                <h3 data-i18n="how_it_works">How It Works</h3>
                 <p id="home-examples">For every city we track average temperature, temperature range and rate of change, wind speed and direction, calm periods, and more.</p>
             </div>
         </section>
@@ -77,6 +81,7 @@
     </footer>
 
     <script src="config.js"></script>
+    <script src="i18n.js"></script>
     <script src="api.js"></script>
     <script src="home.js"></script>
 </body>
