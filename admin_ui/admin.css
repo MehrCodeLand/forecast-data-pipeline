@@ -177,7 +177,8 @@ body {
 
 input[type="text"],
 input[type="password"],
-input[type="number"] {
+input[type="number"],
+textarea {
     width: 100%;
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-color);
@@ -185,11 +186,18 @@ input[type="number"] {
     padding: 10px 12px;
     border-radius: 6px;
     font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
 }
 
-input:focus {
+input:focus,
+textarea:focus {
     outline: none;
     border-color: var(--accent-purple);
+}
+
+.form-field-wide {
+    margin-bottom: 15px;
 }
 
 /* Buttons */
@@ -222,6 +230,27 @@ input:focus {
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+.btn-danger {
+    background-color: transparent;
+    border: 1px solid var(--error);
+    color: var(--error);
+}
+
+.btn-danger:hover {
+    background-color: rgba(248, 81, 73, 0.15);
+}
+
+.actions-cell {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 /* Tables */

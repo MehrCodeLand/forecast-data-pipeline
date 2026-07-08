@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Optional
+from typing import Dict
 
 import httpx
 from loguru import logger
@@ -26,13 +26,24 @@ async def fetch_current_weather(lat: float, lon: float) -> Dict:
         raise
 
 
-async def collect_weather_snapshot(data_manager: Optional[JSONDataManager] = None) -> Dict:
-    """Fetch one weather snapshot and append it to the data store."""
-    data_manager = data_manager or JSONDataManager(settings.data_file)
-    weather_data = await fetch_current_weather(settings.latitude, settings.longitude)
+async def collect_weather_snapshot(lat: float, lon: float,
+                                   data_manager: JSONDataManager) -> Dict:
+    """Fetch one weather snapshot for a location and append it to its store."""
+    weather_data = await fetch_current_weather(lat, lon)
     await data_manager.save_data(weather_data)
     return weather_data
 
 
+async def _collect_all_once():
+    from cities import city_store
+    for city in city_store.enabled():
+        try:
+            await collect_weather_snapshot(
+                city["latitude"], city["longitude"], city_store.data_manager(city))
+            logger.info(f"Collected snapshot for {city['name']}")
+        except Exception as e:
+            logger.error(f"Collection failed for {city['name']}: {e}")
+
+
 if __name__ == "__main__":
-    asyncio.run(collect_weather_snapshot())
+    asyncio.run(_collect_all_once())

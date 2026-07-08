@@ -1,18 +1,34 @@
 # Forecast Data Pipeline
 
-Collects current weather for Tehran from the [Open-Meteo API](https://open-meteo.com/) on a schedule, stores it as JSON, and serves analysis (temperature, wind, summaries) over a FastAPI backend with a small dashboard frontend.
+Collects current weather for cities around the world from the [Open-Meteo API](https://open-meteo.com/) on a schedule, stores every snapshot as JSON, and serves per-city analytics (temperature, wind, summaries) over a FastAPI backend with an installable PWA frontend.
 
 ## How data collection works
 
-Collection is handled by an **in-app scheduler** (`scheduler.py`) — no cron needed. When the API starts, `WeatherScheduler` runs as an asyncio background task inside the FastAPI process: it fetches a snapshot immediately, then every `FETCH_INTERVAL_MINUTES` (default 60), appending each record to the JSON data file.
+Collection is handled by an **in-app scheduler** (`scheduler.py`) — no cron needed. When the API starts, `WeatherScheduler` runs as an asyncio background task inside the FastAPI process: every `FETCH_INTERVAL_MINUTES` (default 60) it fetches a snapshot for **every enabled city** and appends it to that city's data file (`data/weather_<city>.json`).
 
-Scheduler endpoints:
+Cities are managed from the admin panel and stored in `data/cities.json`. The default seed is Tehran, pointing at the pre-existing data file so old data is kept.
 
-- `GET /health` — API liveness + whether the scheduler is running
-- `GET /scheduler/status` — run counts, failures, last run/success time, last error
-- `POST /scheduler/collect-now` — trigger a collection immediately
+## Public site
 
-A one-off manual collection is still possible with `python fetch_weather.py`.
+Served by nginx (`frontend/`):
+
+- **Home** (`index.html`) — intro about the project (admin-editable), tracked-city cards, what we measure
+- **Cities** (`cities.html`) — all tracked cities with their latest conditions; click one to open its dashboard
+- **City dashboard** (`city.html?city=<id>`) — summary, temperature analytics, wind analytics, calm periods and recent raw data for that city
+- **Info** (`info.html`) — about the project, mission, data description and contact (all admin-editable)
+
+The site is a **PWA**: it ships a web manifest, icons and a service worker (`sw.js`), so visitors can install it on their phone ("Add to Home Screen"). The app shell works offline and the last seen data is served when the network is gone.
+
+## Public API
+
+- `GET /cities` — tracked cities with latest snapshot
+- `GET /cities/{id}` — city detail
+- `GET /cities/{id}/data?limit=` — raw records, newest first
+- `GET /cities/{id}/summary?period=`
+- `GET /cities/{id}/temperature/average|range|rate-of-change|delta`
+- `GET /cities/{id}/wind/average-speed|peak-speed|dominant-direction|direction-variability|calm-periods`
+- `GET /content` — admin-managed site content
+- `GET /health`, `GET /scheduler/status`
 
 ## Admin panel
 
@@ -31,22 +47,25 @@ Default login is `admin` / `admin123`. **Change it before deploying**: pick a ne
 
 From the panel an admin can:
 
-- See scheduler status (runs, failures, last success/error) and collected-data stats
-- Change the collection location (latitude/longitude) and interval; changes apply immediately and persist to `data/app_settings.json`
-- Trigger an immediate collection
-- View the full report in the browser (HTML) or download it as PDF
-- Download the complete dataset as JSON or CSV
+- **Manage cities**: add any city in the world (name, country, coordinates), enable/disable, delete, or collect a snapshot immediately (per city or all at once)
+- **Manage site content**: every text block on the public main page and info page (site name, tagline, intro, about, mission, data description, contact, footer)
+- Change the global collection interval; applies immediately and persists to `data/app_settings.json`
+- View per-city full reports in the browser (HTML) or download them as PDF
+- Download each city's dataset as JSON or CSV
 
-The full report (`{admin_path}/report`) includes collection status, weather summaries over the last 6/24/72/168 records, and the latest records table.
+The full report (`{admin_path}/report?city=<id>`) includes collection status, weather summaries over the last 6/24/72/168 records, and the latest records table.
 
 ## Configuration (environment variables)
 
 | Variable | Default | Description |
 |---|---|---|
-| `WEATHER_LAT` | `35.685017` | Latitude (Tehran) |
-| `WEATHER_LON` | `51.389693` | Longitude (Tehran) |
-| `FETCH_INTERVAL_MINUTES` | `60` | Minutes between collections |
-| `DATA_FILE` | `data/forecast_data_tehran.json` | Where records are stored |
+| `FETCH_INTERVAL_MINUTES` | `60` | Minutes between collection runs |
+| `WEATHER_LAT` / `WEATHER_LON` | Tehran | Seed coordinates for the default city |
+| `DATA_FILE` | `data/forecast_data_tehran.json` | Seed data file for the default city |
+| `CITIES_FILE` | `data/cities.json` | City registry |
+| `CONTENT_FILE` | `data/site_content.json` | Admin-managed site content |
+| `SETTINGS_FILE` | `data/app_settings.json` | Persisted runtime settings |
+| `ADMIN_CONFIG_FILE` | `admin_config.json` | Admin credentials and panel URL |
 
 ## Running
 
@@ -54,7 +73,7 @@ With Docker:
 
 ```bash
 docker compose up --build
-# API on http://localhost:8342, frontend on http://localhost:8038
+# API + admin on http://localhost:8342, public site on http://localhost:8038
 ```
 
 Locally:
@@ -64,18 +83,20 @@ pip install -r requirements.txt
 uvicorn apis:app --port 8000
 ```
 
-`main.py` is a local demo that prints a summary of the collected data.
+`main.py` is a local demo that prints a summary of the collected data per city.
 
 ## Project layout
 
-- `apis.py` — FastAPI app; starts/stops the scheduler via lifespan
-- `scheduler.py` — periodic in-process weather collection
+- `apis.py` — FastAPI app; public city-scoped endpoints; starts/stops the scheduler via lifespan
+- `scheduler.py` — periodic in-process collection for all enabled cities
+- `cities.py` — city registry (JSON-backed)
+- `content.py` — admin-editable site content (JSON-backed)
 - `fetch_weather.py` — Open-Meteo client + one-shot collection
 - `analyse.py` — analytics over the most recent records
 - `data_json_manager.py` — JSON file storage with ids/timestamps
 - `data_type_convertor.py` — pandas DataFrame conversion
 - `config.py` — settings from env vars, with runtime overrides persisted to JSON
 - `admin_routes.py` / `admin_auth.py` / `admin_ui/` — admin panel (custom URL, JSON-based credentials)
-- `report.py` — full report generation (HTML and PDF)
+- `report.py` — per-city full report generation (HTML and PDF)
 - `admin_config.json` — admin credentials and panel URL
-- `frontend/` — static public dashboard (nginx)
+- `frontend/` — public site + PWA (nginx)

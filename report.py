@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Dict, List
 
 from fpdf import FPDF
-from loguru import logger
 
 from analyse import Analyse
 from config import settings
@@ -18,8 +17,8 @@ SUMMARY_WINDOWS = [6, 24, 72, 168]
 LATEST_RECORDS_IN_REPORT = 24
 
 
-async def build_report_data(data_manager: JSONDataManager, analyser: Analyse,
-                            scheduler_status: Dict) -> Dict:
+async def build_report_data(city: Dict, data_manager: JSONDataManager,
+                            analyser: Analyse, scheduler_status: Dict) -> Dict:
     data = await data_manager.read_data()
 
     summaries = {}
@@ -27,15 +26,25 @@ async def build_report_data(data_manager: JSONDataManager, analyser: Analyse,
         if len(data) >= 2 and window <= max(len(data), SUMMARY_WINDOWS[0]):
             summaries[window] = await analyser.get_weather_summary(window)
 
+    city_scheduler = scheduler_status.get("cities", {}).get(city["id"], {})
+
     return {
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "location": {"latitude": settings.latitude, "longitude": settings.longitude},
+        "city": {
+            "id": city["id"],
+            "name": city["name"],
+            "country": city["country"],
+            "latitude": city["latitude"],
+            "longitude": city["longitude"],
+        },
         "collection": {
             "total_records": len(data),
             "first_record": data[0].get("timestamp", "-") if data else "-",
             "last_record": data[-1].get("timestamp", "-") if data else "-",
             "interval_minutes": settings.fetch_interval_minutes,
-            "scheduler": scheduler_status,
+            "scheduler_running": scheduler_status.get("running"),
+            "last_success_at": city_scheduler.get("last_success_at"),
+            "collection_failures": city_scheduler.get("failures", 0),
         },
         "summaries": summaries,
         "latest_records": list(reversed(data[-LATEST_RECORDS_IN_REPORT:])),
@@ -82,15 +91,14 @@ def render_report_html(report: Dict, admin_path: str) -> str:
     )
 
     collection = report["collection"]
-    scheduler = collection["scheduler"]
-    location = report["location"]
+    city = report["city"]
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weather Report</title>
+<title>Weather Report - {city["name"]}</title>
 <link rel="stylesheet" href="{admin_path}/static/admin.css">
 </head>
 <body>
@@ -99,18 +107,18 @@ def render_report_html(report: Dict, admin_path: str) -> str:
     <div class="nav-brand"><h1>Weather Admin</h1></div>
     <ul class="nav-menu">
       <li><a href="{admin_path}/dashboard">Dashboard</a></li>
-      <li><a href="{admin_path}/report" class="active">Report</a></li>
+      <li><a href="{admin_path}/report?city={city["id"]}" class="active">Report</a></li>
       <li><a href="#" id="logout-link">Logout</a></li>
     </ul>
   </div>
 </nav>
 <div class="container main-content">
   <div class="header">
-    <h2>Full Weather Report</h2>
+    <h2>Full Weather Report - {city["name"]}, {city["country"]}</h2>
     <div class="controls">
-      <a class="btn" href="{admin_path}/report/pdf">Download PDF</a>
-      <a class="btn btn-secondary" href="{admin_path}/api/download/csv">Download CSV</a>
-      <a class="btn btn-secondary" href="{admin_path}/api/download/json">Download JSON</a>
+      <a class="btn" href="{admin_path}/report/pdf?city={city["id"]}">Download PDF</a>
+      <a class="btn btn-secondary" href="{admin_path}/api/download/csv?city={city["id"]}">Download CSV</a>
+      <a class="btn btn-secondary" href="{admin_path}/api/download/json?city={city["id"]}">Download JSON</a>
     </div>
   </div>
 
@@ -118,14 +126,14 @@ def render_report_html(report: Dict, admin_path: str) -> str:
     <h3>Report Information</h3>
     <table><tbody>
       <tr><td>Generated at</td><td>{report["generated_at"]}</td></tr>
-      <tr><td>Location</td><td>lat {location["latitude"]}, lon {location["longitude"]} (Tehran)</td></tr>
+      <tr><td>City</td><td>{city["name"]}, {city["country"]} (lat {city["latitude"]}, lon {city["longitude"]})</td></tr>
       <tr><td>Total records collected</td><td>{collection["total_records"]}</td></tr>
       <tr><td>First record</td><td>{collection["first_record"]}</td></tr>
       <tr><td>Last record</td><td>{collection["last_record"]}</td></tr>
       <tr><td>Collection interval</td><td>every {collection["interval_minutes"]} minutes</td></tr>
-      <tr><td>Scheduler running</td><td>{scheduler.get("running")}</td></tr>
-      <tr><td>Runs / failures</td><td>{scheduler.get("runs")} / {scheduler.get("failures")}</td></tr>
-      <tr><td>Last successful collection</td><td>{scheduler.get("last_success_at") or "-"}</td></tr>
+      <tr><td>Scheduler running</td><td>{collection["scheduler_running"]}</td></tr>
+      <tr><td>Collection failures for this city</td><td>{collection["collection_failures"]}</td></tr>
+      <tr><td>Last successful collection</td><td>{collection["last_success_at"] or "-"}</td></tr>
     </tbody></table>
   </div>
 
@@ -154,9 +162,11 @@ document.getElementById('logout-link').addEventListener('click', async function 
 
 
 class _ReportPDF(FPDF):
+    title_text = "Weather Analysis Report"
+
     def header(self):
         self.set_font("helvetica", "B", 14)
-        self.cell(0, 8, "Weather Analysis Report - Tehran", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 8, self.title_text, new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(120, 120, 120)
         self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
         self.ln(4)
@@ -183,26 +193,26 @@ class _ReportPDF(FPDF):
 
 
 def render_report_pdf(report: Dict) -> bytes:
+    city = report["city"]
     pdf = _ReportPDF()
+    pdf.title_text = f'Weather Analysis Report - {city["name"]}, {city["country"]}'
     pdf.alias_nb_pages()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
     collection = report["collection"]
-    scheduler = collection["scheduler"]
-    location = report["location"]
 
     pdf.section_title("Report Information")
     pdf.key_value_table([
         ("Generated at", report["generated_at"]),
-        ("Location", f'lat {location["latitude"]}, lon {location["longitude"]} (Tehran)'),
+        ("City", f'{city["name"]}, {city["country"]} (lat {city["latitude"]}, lon {city["longitude"]})'),
         ("Total records collected", collection["total_records"]),
         ("First record", collection["first_record"]),
         ("Last record", collection["last_record"]),
         ("Collection interval", f'every {collection["interval_minutes"]} minutes'),
-        ("Scheduler running", scheduler.get("running")),
-        ("Runs / failures", f'{scheduler.get("runs")} / {scheduler.get("failures")}'),
-        ("Last successful collection", scheduler.get("last_success_at") or "-"),
+        ("Scheduler running", collection["scheduler_running"]),
+        ("Collection failures for this city", collection["collection_failures"]),
+        ("Last successful collection", collection["last_success_at"] or "-"),
     ])
 
     for window, summary in report["summaries"].items():

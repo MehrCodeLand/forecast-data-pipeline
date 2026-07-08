@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1117">
+    <title>City Dashboard - Weather Watch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1 id="site-name">Weather Watch</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="cities.html" class="active">Cities</a></li>
+                <li><a href="info.html">Info</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <div>
+                <h2 id="city-name">City</h2>
+                <p class="page-lead" id="city-meta">--</p>
+            </div>
+            <div class="controls">
+                <label for="period">Period (records):</label>
+                <input type="number" id="period" value="24" min="1" max="500">
+                <button onclick="loadCityDashboard()" class="btn">Refresh</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <section>
+            <h2 class="section-title">Summary</h2>
+            <div id="summary-grid" class="card-grid"></div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Temperature</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Average</h3>
+                    <div id="avg-temp" class="metric-value">--</div>
+                    <p class="metric-unit">degrees C</p>
+                </div>
+                <div class="card">
+                    <h3>Range</h3>
+                    <div class="metric-detail">
+                        <p>Min: <span id="temp-min">--</span></p>
+                        <p>Max: <span id="temp-max">--</span></p>
+                        <p>Range: <span id="temp-range-val">--</span></p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Rate of Change</h3>
+                    <div id="rate-change" class="metric-value">--</div>
+                    <p class="metric-unit">degrees C / hour</p>
+                </div>
+                <div class="card">
+                    <h3>Delta per Hour</h3>
+                    <div id="delta" class="metric-value">--</div>
+                    <p class="metric-unit">degrees C / hour</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Wind</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Average Speed</h3>
+                    <div id="avg-wind" class="metric-value">--</div>
+                    <p class="metric-unit">km/h</p>
+                </div>
+                <div class="card">
+                    <h3>Peak Speed</h3>
+                    <div id="peak-wind" class="metric-value">--</div>
+                    <p class="metric-unit">km/h</p>
+                </div>
+                <div class="card">
+                    <h3>Dominant Direction</h3>
+                    <div id="wind-direction" class="metric-value">--</div>
+                    <p class="metric-unit">degrees</p>
+                    <p class="direction-text" id="direction-text">--</p>
+                </div>
+                <div class="card">
+                    <h3>Direction Variability</h3>
+                    <div id="wind-variability" class="metric-value">--</div>
+                    <p class="metric-unit">std deviation</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Calm Periods</h3>
+                <div class="controls" style="margin-bottom: 15px;">
+                    <label for="calm-threshold">Threshold (km/h):</label>
+                    <input type="number" id="calm-threshold" value="5" min="0" step="0.5">
+                    <button onclick="loadCalmPeriods()" class="btn btn-secondary">Calculate</button>
+                </div>
+                <div class="metric-detail">
+                    <p>Calm periods: <span id="calm-count">--</span></p>
+                    <p>Total periods: <span id="total-periods">--</span></p>
+                    <p>Calm percentage: <span id="calm-percentage">--</span>%</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-header">
+                <h2>Recent Data</h2>
+                <div class="controls">
+                    <label for="data-limit">Rows:</label>
+                    <input type="number" id="data-limit" value="25" min="1" max="500">
+                    <button onclick="loadCityData()" class="btn btn-secondary">Load</button>
+                </div>
+            </div>
+            <div class="card">
+                <p>Total records: <span id="total-records">--</span> | Showing: <span id="showing-records">--</span></p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Time</th>
+                                <th>Temperature (C)</th>
+                                <th>Wind (km/h)</th>
+                                <th>Direction</th>
+                                <th>Code</th>
+                                <th>Day/Night</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p id="footer-text">Weather Analysis System</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="city.js"></script>
+</body>
+</html>
