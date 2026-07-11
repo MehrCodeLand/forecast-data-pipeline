@@ -6,7 +6,25 @@ const I18N = {
         nav_home: 'Home',
         nav_cities: 'Cities',
         nav_info: 'Info',
+        nav_compare: 'Compare',
         coming_soon: 'Buy me a coffee - coming soon!',
+        map_title: 'Live Map',
+        map_note: 'Every dot is a tracked city. Hover for the latest conditions; click to open its dashboard.',
+        compare_title: 'Compare Cities',
+        compare_pick: 'Pick 2 to 4 cities and see their temperature and wind side by side.',
+        compare_btn: 'Compare',
+        compare_table_title: 'Side by Side',
+        compare_need_more: 'At least two cities are needed for a comparison.',
+        metric: 'Metric',
+        theme_toggle: 'Toggle light/dark theme',
+        default_tagline: 'Weather data collection and analysis, city by city',
+        default_intro: 'We continuously collect current weather conditions for cities around the world and turn them into clear, comparable analytics. Pick a city to explore its temperature and wind behaviour over time.',
+        default_examples: 'For every city we track average temperature, temperature range and rate of change, wind speed and direction, calm periods, and more - all computed from data we collect ourselves at regular intervals.',
+        default_about_title: 'About This Project',
+        default_about: 'This project is an independent weather data pipeline. We fetch current conditions for each tracked city on a fixed schedule, store every snapshot, and compute analytics over the collected history.',
+        default_mission: 'Our goal is to make raw weather history accessible and understandable. All figures on this site come from our own collected snapshots.',
+        default_data_desc: 'For each city we store the current temperature, wind speed, wind direction, day/night flag and weather code, together with a timestamp.',
+        default_footer: 'Weather Analysis System',
         explore_cities: 'Explore Cities',
         about_project: 'About the Project',
         cities_we_track: 'Cities We Track',
@@ -115,7 +133,25 @@ const I18N = {
         nav_home: 'خانه',
         nav_cities: 'شهرها',
         nav_info: 'درباره',
+        nav_compare: 'مقایسه',
         coming_soon: 'یک قهوه مهمانم کن - به‌زودی!',
+        map_title: 'نقشه زنده',
+        map_note: 'هر نقطه یک شهر رصدشده است. برای دیدن آخرین وضعیت، نشانگر را روی آن ببرید و برای باز کردن داشبورد کلیک کنید.',
+        compare_title: 'مقایسه شهرها',
+        compare_pick: 'دو تا چهار شهر را انتخاب کنید و دما و باد آن‌ها را کنار هم ببینید.',
+        compare_btn: 'مقایسه',
+        compare_table_title: 'کنار هم',
+        compare_need_more: 'برای مقایسه دست‌کم دو شهر لازم است.',
+        metric: 'شاخص',
+        theme_toggle: 'تغییر حالت روشن/تاریک',
+        default_tagline: 'جمع‌آوری و تحلیل داده‌های هواشناسی، شهر به شهر',
+        default_intro: 'ما به‌طور پیوسته وضعیت آب‌وهوای شهرهای مختلف جهان را جمع‌آوری می‌کنیم و آن را به تحلیل‌های روشن و قابل مقایسه تبدیل می‌کنیم. یک شهر را انتخاب کنید تا رفتار دما و باد آن را در طول زمان ببینید.',
+        default_examples: 'برای هر شهر میانگین دما، بازه دما و نرخ تغییر، سرعت و جهت باد، دوره‌های آرام و موارد دیگر را دنبال می‌کنیم - همه از داده‌هایی که خودمان در بازه‌های منظم جمع‌آوری می‌کنیم.',
+        default_about_title: 'درباره این پروژه',
+        default_about: 'این پروژه یک سامانه مستقل جمع‌آوری داده‌های هواشناسی است. ما وضعیت لحظه‌ای هر شهر را طبق برنامه زمان‌بندی دریافت می‌کنیم، هر رکورد را ذخیره می‌کنیم و روی تاریخچه جمع‌آوری‌شده تحلیل انجام می‌دهیم.',
+        default_mission: 'هدف ما دسترس‌پذیر و قابل فهم کردن تاریخچه خام آب‌وهواست. همه اعداد این سایت از رکوردهایی که خودمان جمع کرده‌ایم به دست می‌آید.',
+        default_data_desc: 'برای هر شهر دمای فعلی، سرعت باد، جهت باد، شاخص روز/شب و کد وضعیت هوا را همراه با برچسب زمانی ذخیره می‌کنیم.',
+        default_footer: 'سامانه تحلیل آب‌وهوا',
         explore_cities: 'مشاهده شهرها',
         about_project: 'درباره پروژه',
         cities_we_track: 'شهرهایی که رصد می‌کنیم',
@@ -250,4 +286,39 @@ function applyLanguage() {
     }
 }
 
+// ---- Theme (light/dark). Default follows the system preference; the
+// navbar toggle overrides it and the choice persists. ----
+
+const THEME_ICONS = {
+    // shown on the button is the theme you would switch TO
+    sun: '<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM8 0a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1A.75.75 0 0 1 8 0Zm0 13.5a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1A.75.75 0 0 1 8 13.5ZM2.343 2.343a.75.75 0 0 1 1.061 0l.708.707a.75.75 0 0 1-1.061 1.061l-.708-.707a.75.75 0 0 1 0-1.061Zm9.545 9.545a.75.75 0 0 1 1.06 0l.708.708a.75.75 0 1 1-1.06 1.06l-.708-.707a.75.75 0 0 1 0-1.06ZM0 8a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1A.75.75 0 0 1 0 8Zm13.5 0a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1A.75.75 0 0 1 13.5 8ZM4.112 11.888a.75.75 0 0 1 0 1.06l-.708.708a.75.75 0 1 1-1.06-1.06l.707-.708a.75.75 0 0 1 1.06 0Zm9.545-9.545a.75.75 0 0 1 0 1.061l-.707.707a.75.75 0 1 1-1.061-1.06l.707-.708a.75.75 0 0 1 1.061 0Z"/></svg>',
+    moon: '<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/></svg>'
+};
+
+const CURRENT_THEME = (() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+        ? 'light' : 'dark';
+})();
+
+function applyTheme() {
+    document.documentElement.dataset.theme = CURRENT_THEME;
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = CURRENT_THEME === 'light' ? '#f6f8fa' : '#0d1117';
+
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+        toggle.innerHTML = CURRENT_THEME === 'light' ? THEME_ICONS.moon : THEME_ICONS.sun;
+        toggle.setAttribute('aria-label', t('theme_toggle'));
+        toggle.setAttribute('title', t('theme_toggle'));
+        toggle.addEventListener('click', () => {
+            localStorage.setItem('theme', CURRENT_THEME === 'light' ? 'dark' : 'light');
+            window.location.reload();
+        });
+    }
+}
+
 applyLanguage();
+applyTheme();

@@ -13,9 +13,12 @@ Cities are managed from the admin panel and stored in `data/cities.json`. The de
 Served by nginx (`frontend/`):
 
 - **Home** (`index.html`) — intro about the project (admin-editable), tracked-city cards, what we measure
-- **Cities** (`cities.html`) — all tracked cities with their latest conditions; click one to open its dashboard
-- **City dashboard** (`city.html?city=<id>`) — summary, temperature analytics, wind analytics, calm periods and recent raw data for that city
-- **Info** (`info.html`) — about the project, mission, data description and contact (all admin-editable)
+- **Cities** (`cities.html`) — a **live world map** (static Natural Earth SVG, no external tiles) with every tracked city as a dot — hover for latest conditions, click to open the dashboard — plus the city cards
+- **City dashboard** (`city.html?city=<id>`) — summary, trends charts, records, temperature/wind analytics, calm periods and recent raw data
+- **Compare** (`compare.html`) — pick 2-4 cities and see their metrics side by side plus overlaid temperature/wind charts
+- **Info** (`info.html`) — about the project, mission, data description, developers and contact (all admin-editable)
+
+The site supports **light and dark themes**: the default follows the visitor's system preference and a navbar toggle overrides it (persisted per device).
 
 The site is a **PWA**: it ships a web manifest, icons and a service worker (`sw.js`), so visitors can install it on their phone ("Add to Home Screen"). The app shell works offline and the last seen data is served when the network is gone.
 

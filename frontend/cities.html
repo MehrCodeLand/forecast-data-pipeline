@@ -19,9 +19,11 @@
             <ul class="nav-menu">
                 <li><a href="index.html" data-i18n="nav_home">Home</a></li>
                 <li><a href="cities.html" class="active" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="compare.html" data-i18n="nav_compare">Compare</a></li>
                 <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
             <div class="nav-actions">
+                <button id="theme-toggle" class="btn btn-secondary icon-btn" type="button" aria-label="Toggle theme"></button>
                 <button id="donate-link" class="donate-btn" type="button" aria-label="Buy me a coffee">☕</button>
                 <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
             </div>
@@ -37,18 +39,26 @@
         <div id="loading" class="loading" data-i18n="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
 
+        <div class="card">
+            <h3 data-i18n="map_title">Live Map</h3>
+            <p data-i18n="map_note">Every dot is a tracked city. Hover for the latest conditions; click to open its dashboard.</p>
+            <div id="city-map"></div>
+        </div>
+
         <div id="cities-grid" class="card-grid"></div>
     </div>
 
     <footer>
         <div class="container">
-            <p id="footer-text">Weather Analysis System</p>
+            <p id="footer-text" data-i18n="default_footer">Weather Analysis System</p>
         </div>
     </footer>
 
     <script src="config.js"></script>
     <script src="i18n.js"></script>
     <script src="api.js"></script>
+    <script src="world-map.js"></script>
+    <script src="map.js"></script>
     <script src="cities.js"></script>
 </body>
 </html>

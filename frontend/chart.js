@@ -2,6 +2,82 @@
 // the series color is passed in. Charts always read left-to-right (oldest to
 // newest) even on RTL pages, which is the natural reading order for a timeline.
 
+// Multi-series variant used by the compare page: series is an array of
+// { name, color, points: [{label, y}] }. X positions are index-based so
+// cities with slightly different timestamps still overlay cleanly.
+function renderMultiLineChart(container, series, opts) {
+    opts = opts || {};
+    const unit = opts.unit || '';
+    const emptyText = opts.emptyText || 'Not enough data to chart yet.';
+
+    const drawable = series
+        .map(s => ({ ...s, points: s.points.filter(p => typeof p.y === 'number' && !isNaN(p.y)) }))
+        .filter(s => s.points.length >= 2);
+    if (!drawable.length) {
+        container.innerHTML = `<p class="chart-empty">${emptyText}</p>`;
+        return;
+    }
+
+    const W = 640, H = 280;
+    const padL = 48, padR = 16, padT = 16, padB = 56;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    const allY = drawable.flatMap(s => s.points.map(p => p.y));
+    let minY = Math.min(...allY), maxY = Math.max(...allY);
+    if (minY === maxY) { minY -= 1; maxY += 1; }
+    const margin = (maxY - minY) * 0.12;
+    minY -= margin; maxY += margin;
+
+    const maxN = Math.max(...drawable.map(s => s.points.length));
+    const xAt = (i, n) => padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+    const yAt = v => padT + plotH - ((v - minY) / (maxY - minY)) * plotH;
+    const round = x => Math.round(x * 10) / 10;
+
+    const STEPS = 4;
+    let grid = '', yLabels = '';
+    for (let s = 0; s <= STEPS; s++) {
+        const value = minY + (s / STEPS) * (maxY - minY);
+        const y = round(yAt(value));
+        grid += `<line class="chart-grid" x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"></line>`;
+        yLabels += `<text class="chart-axis" x="${padL - 8}" y="${y + 4}" text-anchor="end">${round(value)}</text>`;
+    }
+
+    let paths = '', dots = '';
+    drawable.forEach(s => {
+        const n = s.points.length;
+        const line = s.points
+            .map((p, i) => `${i === 0 ? 'M' : 'L'} ${round(xAt(i, n))} ${round(yAt(p.y))}`)
+            .join(' ');
+        paths += `<path d="${line}" fill="none" stroke="${s.color}" stroke-width="2"
+                        stroke-linejoin="round" stroke-linecap="round"></path>`;
+        s.points.forEach((p, i) => {
+            const title = `${s.name}${p.label ? ' - ' + p.label : ''}: ${p.y}${unit ? ' ' + unit : ''}`;
+            dots += `<circle class="chart-dot" cx="${round(xAt(i, n))}" cy="${round(yAt(p.y))}" r="2.5"
+                             style="fill:${s.color}"><title>${title}</title></circle>`;
+        });
+    });
+
+    // Legend row under the plot
+    let legend = '';
+    let lx = padL;
+    drawable.forEach(s => {
+        legend += `<circle cx="${lx}" cy="${H - 14}" r="5" style="fill:${s.color}"></circle>` +
+                  `<text class="chart-axis chart-legend" x="${lx + 10}" y="${H - 10}">${s.name}</text>`;
+        lx += 14 + s.name.length * 7 + 24;
+    });
+
+    container.innerHTML = `
+        <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img">
+            ${grid}
+            ${paths}
+            ${dots}
+            ${yLabels}
+            ${legend}
+        </svg>
+    `;
+}
+
 function renderLineChart(container, points, opts) {
     opts = opts || {};
     const color = opts.color || '#8957e5';

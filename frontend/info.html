@@ -19,9 +19,11 @@
             <ul class="nav-menu">
                 <li><a href="index.html" data-i18n="nav_home">Home</a></li>
                 <li><a href="cities.html" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="compare.html" data-i18n="nav_compare">Compare</a></li>
                 <li><a href="info.html" class="active" data-i18n="nav_info">Info</a></li>
             </ul>
             <div class="nav-actions">
+                <button id="theme-toggle" class="btn btn-secondary icon-btn" type="button" aria-label="Toggle theme"></button>
                 <button id="donate-link" class="donate-btn" type="button" aria-label="Buy me a coffee">☕</button>
                 <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
             </div>
@@ -30,24 +32,24 @@
 
     <div class="container main-content">
         <div class="header">
-            <h2 id="about-title">About This Project</h2>
+            <h2 id="about-title" data-i18n="default_about_title">About This Project</h2>
         </div>
 
         <div id="error" class="error" style="display: none;"></div>
 
         <div class="card">
             <h3 data-i18n="who_we_are">Who We Are</h3>
-            <p id="about-text">This project is an independent weather data pipeline. We collect current conditions for each tracked city on a fixed schedule and show the results to you.</p>
+            <p id="about-text" data-i18n="default_about">This project is an independent weather data pipeline. We collect current conditions for each tracked city on a fixed schedule and show the results to you.</p>
         </div>
 
         <div class="card">
             <h3 data-i18n="our_mission">Our Mission</h3>
-            <p id="mission-text">Our goal is to make raw weather history accessible and understandable.</p>
+            <p id="mission-text" data-i18n="default_mission">Our goal is to make raw weather history accessible and understandable.</p>
         </div>
 
         <div class="card">
             <h3 data-i18n="data_we_collect">The Data We Collect</h3>
-            <p id="data-description">For each city we store temperature, wind speed, wind direction, day/night flag and weather code, together with a timestamp.</p>
+            <p id="data-description" data-i18n="default_data_desc">For each city we store temperature, wind speed, wind direction, day/night flag and weather code, together with a timestamp.</p>
         </div>
 
         <div class="card">
@@ -72,7 +74,7 @@
 
     <footer>
         <div class="container">
-            <p id="footer-text">Weather Analysis System</p>
+            <p id="footer-text" data-i18n="default_footer">Weather Analysis System</p>
         </div>
     </footer>
 
