@@ -64,12 +64,20 @@ function formatDateTime(dateString) {
 }
 
 // Loads admin-managed site content in the current language and applies the
-// shared parts (site name, footer, donate link). Returns the language block
-// so pages can render their own sections.
+// shared parts (site name, footer). Returns the language block so pages can
+// render their own sections. Any field left empty in the current language
+// falls back to the other language so a page section is never blank.
 async function loadSiteContent() {
     try {
         const full = await apiRequest('/content');
-        const content = full[CURRENT_LANG] || full.en || {};
+        const primary = full[CURRENT_LANG] || {};
+        const fallback = full[CURRENT_LANG === 'fa' ? 'en' : 'fa'] || {};
+
+        const content = {};
+        Object.keys({ ...fallback, ...primary }).forEach(key => {
+            content[key] = (primary[key] !== undefined && primary[key] !== '')
+                ? primary[key] : fallback[key];
+        });
 
         const siteName = document.getElementById('site-name');
         if (siteName && content.site_name) {
@@ -80,15 +88,34 @@ async function loadSiteContent() {
         if (footerText && content.footer_text) {
             footerText.textContent = content.footer_text;
         }
-        const donateLink = document.getElementById('donate-link');
-        if (donateLink && full.donate_url) {
-            donateLink.href = full.donate_url;
-        }
         return content;
     } catch (error) {
         return null;
     }
 }
+
+// "Buy me a coffee" is not wired to a payment provider yet; clicking it
+// shows a small coming-soon toast. Runs on every page.
+function showToast(message) {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.className = 'app-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const donate = document.getElementById('donate-link');
+    if (donate) {
+        donate.addEventListener('click', () => showToast(t('coming_soon')));
+    }
+});
 
 // PWA: register the service worker so the site can be installed on phones
 if ('serviceWorker' in navigator) {
