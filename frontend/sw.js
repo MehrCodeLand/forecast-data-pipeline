@@ -1,9 +1,12 @@
-// Service worker: makes the site installable as a PWA and keeps the app
-// shell available offline. Static files are served cache-first; API calls
-// go network-first with a cached fallback so the last seen data still
-// shows when the user is offline.
+// Service worker: makes the site installable as a PWA and keeps it working
+// offline. Strategy:
+//   - HTML / CSS / JS  -> network-first (always fresh when online; cache is
+//     the offline fallback). This prevents stale pages, e.g. a cached nav
+//     without the Compare link or with old colors.
+//   - fonts / icons / manifest -> cache-first (they rarely change).
+//   - API (cross-origin) -> network-first with cached fallback.
 
-const CACHE_NAME = 'weather-watch-v5';
+const CACHE_NAME = 'weather-watch-v6';
 
 const APP_SHELL = [
     './',
@@ -20,13 +23,13 @@ const APP_SHELL = [
     './map.js',
     './world-map.js',
     './compare.js',
-    './fonts/Vazirmatn-Regular.woff2',
-    './fonts/Vazirmatn-Medium.woff2',
-    './fonts/Vazirmatn-Bold.woff2',
     './home.js',
     './cities.js',
     './city.js',
     './info.js',
+    './fonts/Vazirmatn-Regular.woff2',
+    './fonts/Vazirmatn-Medium.woff2',
+    './fonts/Vazirmatn-Bold.woff2',
     './manifest.webmanifest',
     './icons/icon-192.png',
     './icons/icon-512.png'
@@ -50,42 +53,47 @@ self.addEventListener('activate', event => {
     );
 });
 
+function cacheFirst(request) {
+    return caches.match(request).then(cached => {
+        if (cached) return cached;
+        return fetch(request).then(response => {
+            if (response && response.ok) {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+            }
+            return response;
+        });
+    });
+}
+
+function networkFirst(request) {
+    return fetch(request)
+        .then(response => {
+            if (response && response.ok) {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+            }
+            return response;
+        })
+        .catch(() => caches.match(request).then(cached => {
+            if (cached) return cached;
+            if (request.mode === 'navigate') return caches.match('./index.html');
+            return Response.error();
+        }));
+}
+
 self.addEventListener('fetch', event => {
     const request = event.request;
-    if (request.method !== 'GET') {
-        return;
-    }
+    if (request.method !== 'GET') return;
 
-    const isSameOrigin = new URL(request.url).origin === self.location.origin;
+    const url = new URL(request.url);
+    const isSameOrigin = url.origin === self.location.origin;
 
-    if (isSameOrigin) {
-        // App shell: cache-first, fill the cache on miss.
-        event.respondWith(
-            caches.match(request).then(cached => {
-                if (cached) {
-                    return cached;
-                }
-                return fetch(request).then(response => {
-                    if (response.ok) {
-                        const copy = response.clone();
-                        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-                    }
-                    return response;
-                });
-            })
-        );
+    if (isSameOrigin && /\.(woff2|png|jpg|svg|webmanifest|ico)$/.test(url.pathname)) {
+        event.respondWith(cacheFirst(request));
     } else {
-        // API calls: network-first, fall back to the last cached answer.
-        event.respondWith(
-            fetch(request)
-                .then(response => {
-                    if (response.ok) {
-                        const copy = response.clone();
-                        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-                    }
-                    return response;
-                })
-                .catch(() => caches.match(request))
-        );
+        // Same-origin HTML/CSS/JS and cross-origin API: always try network
+        // first so the user gets the latest, with cache as the fallback.
+        event.respondWith(networkFirst(request));
     }
 });
