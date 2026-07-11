@@ -1,3 +1,28 @@
+/* Bundled Persian font (Vazirmatn, SIL OFL). Served locally, no CDN. */
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('fonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('fonts/Vazirmatn-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('fonts/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --bg-primary: #0d1117;
     --bg-secondary: #161b22;
@@ -26,11 +51,12 @@ body {
     line-height: 1.6;
 }
 
-/* Farsi (RTL): layouts flip automatically via flex/grid; give Persian text
-   a font stack that renders it well. */
+/* Farsi (RTL): layouts flip automatically via flex/grid; use the bundled
+   Vazirmatn font for crisp Persian text. */
 html[dir="rtl"] body {
-    font-family: Vazirmatn, 'Iranian Sans', Tahoma, 'Segoe UI', 'Noto Sans Arabic', Arial, sans-serif;
-    line-height: 1.9;
+    font-family: 'Vazirmatn', Tahoma, 'Segoe UI', 'Noto Sans Arabic', Arial, sans-serif;
+    line-height: 2;
+    letter-spacing: 0;
 }
 
 /* Keep numeric values like "17.5 C" in left-to-right order inside RTL text */
@@ -91,16 +117,52 @@ html[dir="rtl"] .metric-value {
     flex-wrap: wrap;
 }
 
-/* Donate button (Buy me a coffee) */
-.btn.donate-btn {
-    background-color: #ffdd00;
-    color: #0d1117;
-    font-weight: 600;
-    text-decoration: none;
+/* Donate button (Buy me a coffee): small square with just the coffee emoji */
+.donate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
-.btn.donate-btn:hover {
-    background-color: #e8c900;
+.donate-btn:hover {
+    background-color: var(--border-color);
+    border-color: var(--accent-purple);
+}
+
+/* Coming-soon toast */
+.app-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(20px);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-purple);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 1000;
+    max-width: 90vw;
+    text-align: center;
+}
+
+.app-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Language toggle */
