@@ -3,19 +3,23 @@
 // go network-first with a cached fallback so the last seen data still
 // shows when the user is offline.
 
-const CACHE_NAME = 'weather-watch-v4';
+const CACHE_NAME = 'weather-watch-v5';
 
 const APP_SHELL = [
     './',
     './index.html',
     './cities.html',
     './city.html',
+    './compare.html',
     './info.html',
     './styles.css',
     './config.js',
     './i18n.js',
     './api.js',
     './chart.js',
+    './map.js',
+    './world-map.js',
+    './compare.js',
     './fonts/Vazirmatn-Regular.woff2',
     './fonts/Vazirmatn-Medium.woff2',
     './fonts/Vazirmatn-Bold.woff2',

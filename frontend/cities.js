@@ -27,6 +27,7 @@ async function loadCities() {
     try {
         const result = await apiRequest('/cities');
         showLoading(false);
+        renderCityMap(document.getElementById('city-map'), result.cities);
         if (!result.cities.length) {
             grid.innerHTML = `<div class="card"><p>${t('no_cities')}</p></div>`;
             return;

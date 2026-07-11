@@ -110,12 +110,15 @@ function showToast(message) {
     showToast._timer = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Attach immediately: scripts sit at the end of the body so the button
+// already exists, and this keeps the handler independent of load-event
+// timing (the button must always respond to clicks).
+(() => {
     const donate = document.getElementById('donate-link');
     if (donate) {
         donate.addEventListener('click', () => showToast(t('coming_soon')));
     }
-});
+})();
 
 // PWA: register the service worker so the site can be installed on phones
 if ('serviceWorker' in navigator) {

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1117">
+    <title>Compare - Weather Watch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1 id="site-name">Weather Watch</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                <li><a href="cities.html" data-i18n="nav_cities">Cities</a></li>
+                <li><a href="compare.html" class="active" data-i18n="nav_compare">Compare</a></li>
+                <li><a href="info.html" data-i18n="nav_info">Info</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="btn btn-secondary icon-btn" type="button" aria-label="Toggle theme"></button>
+                <button id="donate-link" class="donate-btn" type="button" aria-label="Buy me a coffee">☕</button>
+                <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="header">
+            <h2 data-i18n="compare_title">Compare Cities</h2>
+            <div class="controls">
+                <label for="period" data-i18n="period_label">Period (records):</label>
+                <input type="number" id="period" value="24" min="2" max="500">
+            </div>
+        </div>
+        <p class="page-lead" data-i18n="compare_pick">Pick 2 to 4 cities and see their temperature and wind side by side.</p>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="card">
+            <h3 data-i18n="nav_cities">Cities</h3>
+            <div id="city-picker" class="picker-grid">
+                <p data-i18n="loading">Loading...</p>
+            </div>
+            <button id="compare-btn" class="btn" data-i18n="compare_btn">Compare</button>
+        </div>
+
+        <div id="compare-results" style="display: none;">
+            <div class="card">
+                <h3 data-i18n="compare_table_title">Side by Side</h3>
+                <div class="table-container">
+                    <table id="compare-table"></table>
+                </div>
+            </div>
+
+            <div class="card-grid chart-grid">
+                <div class="card">
+                    <h3 data-i18n="temp_trend">Temperature over time</h3>
+                    <div id="compare-temp-chart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <h3 data-i18n="wind_trend">Wind speed over time</h3>
+                    <div id="compare-wind-chart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p id="footer-text" data-i18n="default_footer">Weather Analysis System</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="i18n.js"></script>
+    <script src="api.js"></script>
+    <script src="chart.js"></script>
+    <script src="compare.js"></script>
+</body>
+</html>
