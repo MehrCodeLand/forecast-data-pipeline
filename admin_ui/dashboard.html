@@ -353,7 +353,7 @@
             const btn = document.getElementById('add-city-btn');
             btn.disabled = true;
             try {
-                await adminRequest('/api/cities', {
+                const result = await adminRequest('/api/cities', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -363,7 +363,13 @@
                         longitude: parseFloat(document.getElementById('city-lon').value)
                     })
                 });
-                showMessage('City added. It will be collected on the next scheduler run.', 'success');
+                if (result.collected) {
+                    showMessage('City added and first snapshot collected.', 'success');
+                } else {
+                    showMessage('City added, but the first collection failed: ' +
+                        (result.error || 'unknown error') +
+                        '. The API server may be unable to reach open-meteo.com.', 'error');
+                }
                 this.reset();
                 await loadOverview();
             } catch (error) {
