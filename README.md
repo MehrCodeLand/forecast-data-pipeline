@@ -2,7 +2,22 @@
 
 ## Data sources and third parties
 
-- **Weather data**: [Open-Meteo](https://open-meteo.com/) — free, open-source weather API, no API key required. We call one endpoint: `https://api.open-meteo.com/v1/forecast` (current weather + humidity, apparent temperature, precipitation, pressure). This is the only external service the backend talks to.
+- **Weather + air pollution**: [OpenWeather](https://openweathermap.org/api) — used when `OPENWEATHER_API_KEY` is set. Provides current weather (temperature, feels-like, humidity, pressure, visibility, clouds, condition) **and air pollution** (AQI 1–5, PM2.5, PM10, O₃, NO₂, SO₂, CO, NH₃).
+- **Weather data (fallback)**: [Open-Meteo](https://open-meteo.com/) — free, no API key. Used automatically when no OpenWeather key is configured, so the app always works.
+
+Both sources are normalized to the same stored fields (temperature, windspeed in km/h, winddirection, …), so old records and all analytics keep working; the OpenWeather source simply adds the air-quality and extra weather fields.
+
+### Enabling OpenWeather (air pollution)
+
+Copy `.env.example` to `.env` and set your key:
+
+```bash
+cp .env.example .env
+# edit .env -> OPENWEATHER_API_KEY=your_key_here
+docker compose up -d --build
+```
+
+`.env` is gitignored, so the key is never committed. New snapshots then include AQI and pollutant data, which appears as an **Air Quality** section (AQI badge with Good→Very Poor rating, pollutant cards, and AQI / PM2.5 trend charts) on each city dashboard, plus AQI/PM2.5 rows on the Compare page.
 - **World map geometry**: [Natural Earth](https://www.naturalearthdata.com/) (public domain), converted once at build time via the `world-atlas` npm package into a static SVG path — no map/tile service is used at runtime.
 - **Persian font**: [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL OFL license), bundled locally in `frontend/fonts/`.
 

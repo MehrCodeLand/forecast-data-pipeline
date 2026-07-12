@@ -8,8 +8,11 @@ async function loadCityInfo() {
     const city = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}`);
     document.title = `${city.name} - Weather Watch`;
     setText('city-name', `${city.name}, ${city.country}`);
+
+    const latest = city.latest || {};
+    const condition = latest.condition_desc ? ` | ${latest.condition_desc}` : '';
     setText('city-meta',
-        `${city.latitude}, ${city.longitude} | ${city.records} ${t('records_collected')} | ${t('last_update')} ${formatDateTime(city.last_record)}`);
+        `${city.latitude}, ${city.longitude} | ${city.records} ${t('records_collected')} | ${t('last_update')} ${formatDateTime(city.last_record)}${condition}`);
     return city;
 }
 
@@ -74,6 +77,12 @@ function summaryCards(summary) {
     if (summary.avg_pressure !== undefined) {
         cards += metricCard(t('pressure'), summary.avg_pressure, t('hpa'));
     }
+    if (summary.avg_aqi !== undefined) {
+        cards += metricCard(t('avg_aqi'), summary.avg_aqi, t('aqi_scale'));
+    }
+    if (summary.avg_pm2_5 !== undefined) {
+        cards += metricCard('PM2.5', summary.avg_pm2_5, t('avg_ugm3'));
+    }
     return cards;
 }
 
@@ -89,6 +98,63 @@ function shortTime(value) {
 async function loadSummary(period) {
     const result = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}/summary?period=${period}`);
     document.getElementById('summary-grid').innerHTML = summaryCards(result.summary);
+    renderAirQualityCards(result.summary);
+}
+
+// OpenWeather AQI is a 1-5 index. Map each level to a label and a color.
+const AQI_LEVELS = {
+    1: { key: 'aqi_good', color: '#3fb950' },
+    2: { key: 'aqi_fair', color: '#b8c832' },
+    3: { key: 'aqi_moderate', color: '#d29922' },
+    4: { key: 'aqi_poor', color: '#f0883e' },
+    5: { key: 'aqi_very_poor', color: '#f85149' }
+};
+
+// Pollutant components (OpenWeather, in µg/m³) to show as cards.
+const POLLUTANTS = [
+    { key: 'pm2_5', label: 'PM2.5' },
+    { key: 'pm10', label: 'PM10' },
+    { key: 'o3', label: 'O₃' },
+    { key: 'no2', label: 'NO₂' },
+    { key: 'so2', label: 'SO₂' },
+    { key: 'co', label: 'CO' }
+];
+
+function renderAirQualityCards(summary) {
+    const section = document.getElementById('air-quality-section');
+    const current = (summary && summary.current) || {};
+    const hasAir = current.aqi != null || summary.avg_aqi != null;
+    if (!hasAir) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = '';
+
+    const aqi = current.aqi;
+    const level = AQI_LEVELS[aqi];
+    const color = level ? level.color : 'var(--text-secondary)';
+    const label = level ? t(level.key) : '--';
+
+    let html = `
+        <div class="card aqi-card" style="border-color:${color}">
+            <h3>${t('aqi')}</h3>
+            <div class="aqi-badge" style="background:${color}">${fmt(aqi)}</div>
+            <p class="aqi-label" style="color:${color}">${label}</p>
+            <p class="metric-unit">${t('aqi_scale')}</p>
+        </div>
+    `;
+    POLLUTANTS.forEach(p => {
+        if (current[p.key] != null) {
+            html += `
+                <div class="card">
+                    <h3>${p.label}</h3>
+                    <div class="metric-value">${fmt(current[p.key])}</div>
+                    <p class="metric-unit">µg/m³</p>
+                </div>
+            `;
+        }
+    });
+    document.getElementById('air-quality-grid').innerHTML = html;
 }
 
 async function loadCharts(period) {
@@ -98,19 +164,25 @@ async function loadCharts(period) {
         // API returns newest-first; charts read oldest -> newest.
         const chrono = [...data.data].reverse();
 
-        const tempPoints = chrono.map(r => ({
+        const series = field => chrono.map(r => ({
             label: shortTime(r.time),
-            y: typeof r.temperature === 'number' ? r.temperature : null
-        }));
-        const windPoints = chrono.map(r => ({
-            label: shortTime(r.time),
-            y: typeof r.windspeed === 'number' ? r.windspeed : null
+            y: typeof r[field] === 'number' ? r[field] : null
         }));
 
-        renderLineChart(document.getElementById('temp-chart'), tempPoints,
+        renderLineChart(document.getElementById('temp-chart'), series('temperature'),
             { color: '#f0883e', unit: 'C', emptyText: t('chart_empty') });
-        renderLineChart(document.getElementById('wind-chart'), windPoints,
+        renderLineChart(document.getElementById('wind-chart'), series('windspeed'),
             { color: '#58a6ff', unit: 'km/h', emptyText: t('chart_empty') });
+
+        // Air-quality trend charts (only meaningful when such data exists)
+        if (chrono.some(r => typeof r.aqi === 'number')) {
+            renderLineChart(document.getElementById('aqi-chart'), series('aqi'),
+                { color: '#a371f7', unit: 'AQI', emptyText: t('chart_empty') });
+        }
+        if (chrono.some(r => typeof r.pm2_5 === 'number')) {
+            renderLineChart(document.getElementById('pm25-chart'), series('pm2_5'),
+                { color: '#3fb950', unit: 'µg/m³', emptyText: t('chart_empty') });
+        }
     } catch (error) {
         console.error('Failed to load charts:', error);
     }

@@ -257,8 +257,25 @@ class Analyse:
                 "avg_apparent_temperature": await self.get_optional_avg("apparent_temperature", period),
                 "avg_pressure": await self.get_optional_avg("pressure", period),
                 "total_precipitation": await self.get_optional_sum("precipitation", period),
+                # Air quality (OpenWeather)
+                "avg_aqi": await self.get_optional_avg("aqi", period),
+                "avg_pm2_5": await self.get_optional_avg("pm2_5", period),
+                "avg_pm10": await self.get_optional_avg("pm10", period),
+                "avg_clouds": await self.get_optional_avg("clouds", period),
             }
             summary.update({k: v for k, v in optional.items() if v is not None})
+
+            # Latest snapshot carries the current condition and air-quality
+            # components for the "right now" cards.
+            latest = records[-1]
+            current = {}
+            for key in ("aqi", "pm2_5", "pm10", "co", "no2", "o3", "so2", "nh3",
+                        "condition_main", "condition_desc", "condition_icon",
+                        "visibility", "clouds", "source"):
+                if latest.get(key) is not None:
+                    current[key] = latest[key]
+            if current:
+                summary["current"] = current
 
             return summary
         except Exception as e:

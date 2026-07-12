@@ -498,6 +498,32 @@ section {
     text-decoration: underline;
 }
 
+/* Air Quality */
+.aqi-card {
+    text-align: center;
+    border-width: 2px;
+}
+
+.aqi-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    height: 84px;
+    margin: 8px auto;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.aqi-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
 /* Charts */
 .chart-grid {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
