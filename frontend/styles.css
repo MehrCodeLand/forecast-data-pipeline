@@ -689,6 +689,18 @@ tbody tr:hover {
     margin-bottom: 20px;
 }
 
+/* Informational (not an error): e.g. a city that simply has no data yet */
+.error.notice {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.error.notice strong {
+    color: var(--text-primary);
+}
+
 /* Footer */
 footer {
     background-color: var(--bg-secondary);

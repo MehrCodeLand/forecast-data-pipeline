@@ -166,7 +166,11 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
     @router.post("/api/cities", dependencies=[Depends(require_admin)])
     async def add_city(body: CityCreateRequest):
         city = city_store.add(body.name, body.country, body.latitude, body.longitude)
-        return {"created": True, "city": city}
+        # Collect a first snapshot right away so the new city is not empty
+        # until the next scheduled run (which could be up to an hour later).
+        collected = await scheduler.collect_city(city)
+        error = None if collected else scheduler.city_status.get(city["id"], {}).get("last_error")
+        return {"created": True, "city": city, "collected": collected, "error": error}
 
     @router.put("/api/cities/{city_id}", dependencies=[Depends(require_admin)])
     async def update_city(city_id: str, body: CityUpdateRequest):

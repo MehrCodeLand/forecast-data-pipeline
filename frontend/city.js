@@ -246,7 +246,16 @@ async function loadCityDashboard() {
     const period = document.getElementById('period').value;
 
     try {
-        await loadCityInfo();
+        const city = await loadCityInfo();
+        showLoading(false);
+
+        // If the city has no records yet, don't paint a wall of "--";
+        // explain why (and show the collector's last error if there is one).
+        if (!city.records) {
+            await showNoDataNotice();
+            return;
+        }
+
         await Promise.allSettled([
             loadSummary(period),
             loadCharts(period),
@@ -256,10 +265,34 @@ async function loadCityDashboard() {
             loadCalmPeriods(),
             loadCityData()
         ]);
-        showLoading(false);
     } catch (error) {
+        showLoading(false);
         showError(t('error_city'));
     }
+}
+
+// Shows a clear message when a city has collected nothing yet, including the
+// scheduler's last error for this city (e.g. cannot reach the weather API),
+// so the cause is visible instead of a page full of "--".
+async function showNoDataNotice() {
+    let reason = '';
+    try {
+        const status = await apiRequest('/scheduler/status');
+        const cityStatus = (status.cities && status.cities[CITY_ID]) || {};
+        if (!status.running) {
+            reason = t('collector_stopped');
+        } else if (cityStatus.last_error) {
+            reason = `${t('last_error')} ${cityStatus.last_error}`;
+        } else {
+            reason = t('collector_soon').replace('{min}', status.interval_minutes);
+        }
+    } catch (e) {
+        reason = '';
+    }
+    const banner = document.getElementById('error');
+    banner.innerHTML = `<strong>${t('no_data_title')}</strong><br>${t('no_data_body')} ${reason}`;
+    banner.className = 'error notice';
+    banner.style.display = 'block';
 }
 
 window.onload = loadCityDashboard;
