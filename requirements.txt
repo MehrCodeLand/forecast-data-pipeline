@@ -1,6 +1,7 @@
 httpx
 loguru
-pandas
 fastapi
 uvicorn
 fpdf2
+numpy==1.26.4
+pandas==2.2.2
