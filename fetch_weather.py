@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from typing import Dict
 
 import httpx
@@ -22,13 +23,20 @@ EXTRA_FIELD_MAP = {
 
 
 async def fetch_current_weather(lat: float, lon: float) -> Dict:
-    """Fetch the current weather from Open-Meteo.
+    """Fetch one normalized weather snapshot for a location.
 
-    Returns the classic ``current_weather`` block (temperature, windspeed,
-    winddirection, weathercode, is_day, time, interval) plus, when the API
-    provides them, the extra fields in EXTRA_FIELD_MAP. Existing keys are
-    never renamed, so old stored records remain fully compatible.
+    Uses OpenWeather (richer weather + air pollution) when an API key is
+    configured, otherwise Open-Meteo. Both return the SAME stable keys
+    (temperature, windspeed, winddirection, weathercode, is_day, time) so
+    old stored records and analytics keep working; newer sources simply add
+    optional keys (humidity, pressure, aqi, pm2_5, ...).
     """
+    if settings.openweather_api_key:
+        return await _fetch_openweather(lat, lon)
+    return await _fetch_open_meteo(lat, lon)
+
+
+async def _fetch_open_meteo(lat: float, lon: float) -> Dict:
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -48,12 +56,76 @@ async def fetch_current_weather(lat: float, lon: float) -> Dict:
                 if value is not None:
                     snapshot[stored_key] = value
 
+            snapshot["source"] = "open-meteo"
             return snapshot
     except httpx.HTTPError as e:
-        logger.error(f"Error fetching weather data: {e}")
+        logger.error(f"Error fetching Open-Meteo data: {e}")
         raise
     except KeyError as e:
-        logger.error(f"Unexpected API response format, missing key: {e}")
+        logger.error(f"Unexpected Open-Meteo response format, missing key: {e}")
+        raise
+
+
+async def _fetch_openweather(lat: float, lon: float) -> Dict:
+    """Fetch current weather + air pollution from OpenWeather and normalize.
+
+    Wind speed is converted from m/s (OpenWeather metric) to km/h to match
+    the units already stored. Air pollution is fetched separately; if that
+    call fails the weather snapshot is still returned without air fields.
+    """
+    common = {"lat": lat, "lon": lon, "appid": settings.openweather_api_key}
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            wx_resp = await client.get(settings.openweather_weather_url,
+                                       params={**common, "units": "metric"})
+            wx_resp.raise_for_status()
+            wx = wx_resp.json()
+
+            main = wx.get("main", {})
+            wind = wx.get("wind", {})
+            weather0 = (wx.get("weather") or [{}])[0]
+            icon = weather0.get("icon", "")
+            dt = wx.get("dt")
+
+            snapshot = {
+                "time": (datetime.fromtimestamp(dt, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M")
+                         if dt else datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")),
+                "temperature": main.get("temp"),
+                "windspeed": round(wind.get("speed", 0) * 3.6, 1),  # m/s -> km/h
+                "winddirection": wind.get("deg", 0),
+                "weathercode": weather0.get("id"),
+                "is_day": 1 if icon.endswith("d") else 0,
+                "humidity": main.get("humidity"),
+                "apparent_temperature": main.get("feels_like"),
+                "pressure": main.get("pressure"),
+                "temp_min": main.get("temp_min"),
+                "temp_max": main.get("temp_max"),
+                "visibility": wx.get("visibility"),
+                "clouds": (wx.get("clouds") or {}).get("all"),
+                "condition_main": weather0.get("main"),
+                "condition_desc": weather0.get("description"),
+                "condition_icon": icon,
+                "source": "openweather",
+            }
+
+            # Air pollution is a separate endpoint; never let it break the
+            # weather snapshot.
+            try:
+                air_resp = await client.get(settings.openweather_air_url, params=common)
+                air_resp.raise_for_status()
+                air0 = (air_resp.json().get("list") or [{}])[0]
+                snapshot["aqi"] = air0.get("main", {}).get("aqi")
+                for key, value in (air0.get("components") or {}).items():
+                    snapshot[key] = value  # co, no, no2, o3, so2, pm2_5, pm10, nh3
+            except (httpx.HTTPError, KeyError, IndexError) as e:
+                logger.warning(f"Air pollution fetch failed (weather kept): {e}")
+
+            return snapshot
+    except httpx.HTTPError as e:
+        logger.error(f"Error fetching OpenWeather data: {e}")
+        raise
+    except (KeyError, IndexError) as e:
+        logger.error(f"Unexpected OpenWeather response format: {e}")
         raise
 
 

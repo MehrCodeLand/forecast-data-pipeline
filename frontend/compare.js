@@ -91,6 +91,12 @@ function renderCompareTable(cities, summaries) {
     if (summaries.some(s => s?.total_precipitation !== undefined)) {
         rows.push(compareRow(t('precipitation'), summaries.map(s => s?.total_precipitation)));
     }
+    if (summaries.some(s => s?.avg_aqi !== undefined)) {
+        rows.push(compareRow(t('avg_aqi'), summaries.map(s => s?.avg_aqi)));
+    }
+    if (summaries.some(s => s?.avg_pm2_5 !== undefined)) {
+        rows.push(compareRow('PM2.5', summaries.map(s => s?.avg_pm2_5)));
+    }
 
     document.getElementById('compare-table').innerHTML = head + '<tbody>' + rows.join('') + '</tbody>';
 }

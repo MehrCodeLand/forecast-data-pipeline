@@ -11,7 +11,11 @@ services:
       - ./logs:/app/logs
     environment:
       - TZ=Asia/Tehran
-      - FETCH_INTERVAL_MINUTES=60
+      - FETCH_INTERVAL_MINUTES=${FETCH_INTERVAL_MINUTES:-60}
+      # Set OPENWEATHER_API_KEY in a .env file next to this compose file to
+      # collect richer weather + air pollution from OpenWeather. Empty ->
+      # the keyless Open-Meteo source is used.
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
     restart: unless-stopped
 
   frontend:

@@ -21,7 +21,19 @@ class Settings:
         self.fetch_interval_minutes = int(os.getenv("FETCH_INTERVAL_MINUTES", "60"))
         self.data_file = os.getenv("DATA_FILE", "data/forecast_data_tehran.json")
         self.api_url = "https://api.open-meteo.com/v1/forecast"
+
+        # OpenWeather: when an API key is set, snapshots are collected from
+        # OpenWeather (richer weather + air pollution). With no key the app
+        # falls back to the keyless Open-Meteo source, so it keeps working.
+        self.openweather_api_key = os.getenv("OPENWEATHER_API_KEY", "").strip()
+        self.openweather_weather_url = "https://api.openweathermap.org/data/2.5/weather"
+        self.openweather_air_url = "https://api.openweathermap.org/data/2.5/air_pollution"
+
         self._load_overrides()
+
+    @property
+    def source(self) -> str:
+        return "openweather" if self.openweather_api_key else "open-meteo"
 
     def _load_overrides(self) -> None:
         try:
