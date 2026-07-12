@@ -1,13 +1,27 @@
-async function apiRequest(endpoint) {
+// Fetch JSON from the API with a timeout and one automatic retry on
+// transient failures (network drop, timeout, 5xx). Client errors like 404
+// are NOT retried - they are real answers ("no data for this city yet").
+async function apiRequest(endpoint, attempt = 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`);
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, { signal: controller.signal });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            throw error;
         }
         return await response.json();
     } catch (error) {
-        console.error('API Error:', error);
+        const transient = error.status === undefined || error.status >= 500;
+        if (transient && attempt < 2) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+            return apiRequest(endpoint, attempt + 1);
+        }
+        console.error('API Error:', endpoint, error);
         throw error;
+    } finally {
+        clearTimeout(timer);
     }
 }
 
@@ -120,11 +134,15 @@ function showToast(message) {
     }
 })();
 
-// PWA: register the service worker so the site can be installed on phones
+// PWA: register the service worker so the site can be installed on phones.
+// updateViaCache: 'none' makes the browser re-check sw.js on every visit
+// instead of trusting its HTTP cache, so new versions roll out immediately.
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(error => {
-            console.error('Service worker registration failed:', error);
-        });
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+            .then(registration => registration.update().catch(() => {}))
+            .catch(error => {
+                console.error('Service worker registration failed:', error);
+            });
     });
 }

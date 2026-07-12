@@ -1,5 +1,13 @@
 # Forecast Data Pipeline
 
+## Data sources and third parties
+
+- **Weather data**: [Open-Meteo](https://open-meteo.com/) — free, open-source weather API, no API key required. We call one endpoint: `https://api.open-meteo.com/v1/forecast` (current weather + humidity, apparent temperature, precipitation, pressure). This is the only external service the backend talks to.
+- **World map geometry**: [Natural Earth](https://www.naturalearthdata.com/) (public domain), converted once at build time via the `world-atlas` npm package into a static SVG path — no map/tile service is used at runtime.
+- **Persian font**: [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL OFL license), bundled locally in `frontend/fonts/`.
+
+Everything else (API, frontend, admin panel, PWA assets) is self-hosted; the public site makes no runtime requests to any third-party host.
+
 Collects current weather for cities around the world from the [Open-Meteo API](https://open-meteo.com/) on a schedule, stores every snapshot as JSON, and serves per-city analytics (temperature, wind, summaries) over a FastAPI backend with an installable PWA frontend.
 
 ## How data collection works

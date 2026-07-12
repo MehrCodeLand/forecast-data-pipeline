@@ -29,7 +29,9 @@ function enforceLimit() {
 
 async function loadPicker() {
     loadSiteContent();
+    hideError();
     const picker = document.getElementById('city-picker');
+    picker.innerHTML = `<p>${t('loading')}</p>`;
     try {
         const result = await apiRequest('/cities');
         ALL_CITIES = result.cities;
@@ -38,6 +40,7 @@ async function loadPicker() {
             document.getElementById('compare-btn').disabled = true;
             return;
         }
+        document.getElementById('compare-btn').disabled = false;
         picker.innerHTML = ALL_CITIES.map(pickerItem).join('');
         // preselect the first two so the page works with a single click
         const boxes = picker.querySelectorAll('input');
@@ -46,7 +49,14 @@ async function loadPicker() {
         picker.addEventListener('change', enforceLimit);
         enforceLimit();
     } catch (error) {
+        // leave a retry button instead of a dead "Loading..." forever
         showError(t('error_cities'));
+        picker.innerHTML = '';
+        const retry = document.createElement('button');
+        retry.className = 'btn btn-secondary';
+        retry.textContent = t('retry');
+        retry.addEventListener('click', loadPicker);
+        picker.appendChild(retry);
     }
 }
 
@@ -107,6 +117,14 @@ async function runCompare() {
         const histories = await Promise.all(ids.map(id =>
             apiRequest(`/cities/${encodeURIComponent(id)}/data?limit=${period}`)
                 .then(r => [...r.data].reverse()).catch(() => [])));
+
+        // Every request failed or returned nothing: say so instead of
+        // rendering an empty table (a city with no data yet is fine, but
+        // all-empty means the API was unreachable).
+        if (summaries.every(s => s === null) && histories.every(h => h.length === 0)) {
+            showError(t('compare_no_data'));
+            return;
+        }
 
         renderCompareTable(cities, summaries);
 
