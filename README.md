@@ -96,8 +96,15 @@ With Docker:
 
 ```bash
 docker compose up --build
-# API + admin on http://localhost:8342, public site on http://localhost:8038
+# Public site  -> http://localhost:8038   (only this port needs to be open)
+# Admin panel  -> http://localhost:8342/wx-admin
 ```
+
+The public site's nginx **proxies `/api/*` to the backend container**, so
+visitors' browsers only ever talk to port 8038 — the API port (8342) does
+not need to be reachable from the outside network. This is what makes the
+site work on any server without opening a second port or hardcoding a host.
+The admin panel is served directly by the API on 8342.
 
 Locally:
 
