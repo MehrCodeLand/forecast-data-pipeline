@@ -22,10 +22,16 @@ LANG_FIELDS = [
     "footer_text",
 ]
 
+# Shared (not per-language) string fields.
+SHARED_FIELDS = ["donate_url", "icon_data_url"]
+
 DEFAULT_CONTENT = {
     "donate_url": "https://www.buymeacoffee.com",
+    # Custom site icon as a data: URL (set from the admin panel). Empty means
+    # the built-in default icon is used.
+    "icon_data_url": "",
     "en": {
-        "site_name": "Weather Watch",
+        "site_name": "HavaChetor",
         "tagline": "Weather data collection and analysis, city by city",
         "home_intro": (
             "We continuously collect current weather conditions for cities around "
@@ -120,8 +126,9 @@ class ContentStore:
                     self._content["en"][key] = stored[key]
             return
 
-        if isinstance(stored.get("donate_url"), str):
-            self._content["donate_url"] = stored["donate_url"]
+        for field in SHARED_FIELDS:
+            if isinstance(stored.get(field), str):
+                self._content[field] = stored[field]
         for lang in ("en", "fa"):
             block = stored.get(lang)
             if isinstance(block, dict):
@@ -134,8 +141,10 @@ class ContentStore:
 
     def update(self, fields: Dict) -> Dict:
         with self._lock:
-            if isinstance(fields.get("donate_url"), str):
-                self._content["donate_url"] = fields["donate_url"].strip()
+            for field in SHARED_FIELDS:
+                if isinstance(fields.get(field), str):
+                    # data: URLs must keep their whitespace-free payload intact
+                    self._content[field] = fields[field].strip()
             for lang in ("en", "fa"):
                 block = fields.get(lang)
                 if isinstance(block, dict):

@@ -110,14 +110,15 @@ const AQI_LEVELS = {
     5: { key: 'aqi_very_poor', color: '#f85149' }
 };
 
-// Pollutant components (OpenWeather, in µg/m³) to show as cards.
+// Pollutant components (OpenWeather, in µg/m³) with a reference "high" value
+// used to scale the horizontal bars so they are comparable at a glance.
 const POLLUTANTS = [
-    { key: 'pm2_5', label: 'PM2.5' },
-    { key: 'pm10', label: 'PM10' },
-    { key: 'o3', label: 'O₃' },
-    { key: 'no2', label: 'NO₂' },
-    { key: 'so2', label: 'SO₂' },
-    { key: 'co', label: 'CO' }
+    { key: 'pm2_5', label: 'PM2.5', max: 75 },
+    { key: 'pm10', label: 'PM10', max: 200 },
+    { key: 'o3', label: 'O₃', max: 240 },
+    { key: 'no2', label: 'NO₂', max: 200 },
+    { key: 'so2', label: 'SO₂', max: 350 },
+    { key: 'co', label: 'CO', max: 15000 }
 ];
 
 function renderAirQualityCards(summary) {
@@ -132,29 +133,27 @@ function renderAirQualityCards(summary) {
 
     const aqi = current.aqi;
     const level = AQI_LEVELS[aqi];
-    const color = level ? level.color : 'var(--text-secondary)';
-    const label = level ? t(level.key) : '--';
+    const rating = level ? t(level.key) : '--';
 
-    let html = `
-        <div class="card aqi-card" style="border-color:${color}">
+    document.getElementById('air-quality-grid').innerHTML = `
+        <div class="card aqi-card">
             <h3>${t('aqi')}</h3>
-            <div class="aqi-badge" style="background:${color}">${fmt(aqi)}</div>
-            <p class="aqi-label" style="color:${color}">${label}</p>
+            <div id="aqi-gauge" class="aqi-gauge"></div>
             <p class="metric-unit">${t('aqi_scale')}</p>
         </div>
+        <div class="card">
+            <h3>${t('pollutants')}</h3>
+            <div id="pollutant-bars"></div>
+        </div>
     `;
-    POLLUTANTS.forEach(p => {
-        if (current[p.key] != null) {
-            html += `
-                <div class="card">
-                    <h3>${p.label}</h3>
-                    <div class="metric-value">${fmt(current[p.key])}</div>
-                    <p class="metric-unit">µg/m³</p>
-                </div>
-            `;
-        }
-    });
-    document.getElementById('air-quality-grid').innerHTML = html;
+
+    renderAqiGauge(document.getElementById('aqi-gauge'),
+        typeof aqi === 'number' ? aqi : null, rating);
+
+    const items = POLLUTANTS
+        .filter(p => current[p.key] != null)
+        .map(p => ({ label: p.label, value: current[p.key], max: p.max, unit: 'µg/m³' }));
+    renderHBars(document.getElementById('pollutant-bars'), items);
 }
 
 async function loadCharts(period) {
@@ -182,6 +181,30 @@ async function loadCharts(period) {
         if (chrono.some(r => typeof r.pm2_5 === 'number')) {
             renderLineChart(document.getElementById('pm25-chart'), series('pm2_5'),
                 { color: '#3fb950', unit: 'µg/m³', emptyText: t('chart_empty') });
+        }
+
+        // Precipitation & sky: precipitation as bars, humidity + cloud cover
+        // as overlaid lines. Shown when any of these fields are present.
+        const hasPrecip = chrono.some(r => typeof r.precipitation === 'number');
+        const hasHumidity = chrono.some(r => typeof r.humidity === 'number');
+        const hasClouds = chrono.some(r => typeof r.clouds === 'number');
+        const precipSection = document.getElementById('precip-section');
+        if (hasPrecip || hasHumidity || hasClouds) {
+            precipSection.style.display = '';
+            if (hasPrecip) {
+                renderBarChart(document.getElementById('precip-chart'), series('precipitation'),
+                    { color: '#58a6ff', unit: 'mm', emptyText: t('chart_empty') });
+            } else {
+                document.getElementById('precip-chart').innerHTML =
+                    `<p class="chart-empty">${t('no_precip')}</p>`;
+            }
+            const humiditySeries = [];
+            if (hasHumidity) humiditySeries.push({ name: t('humidity'), color: '#3fb950', points: series('humidity') });
+            if (hasClouds) humiditySeries.push({ name: t('clouds'), color: '#8b949e', points: series('clouds') });
+            renderMultiLineChart(document.getElementById('humidity-chart'), humiditySeries,
+                { unit: '%', emptyText: t('chart_empty') });
+        } else {
+            precipSection.style.display = 'none';
         }
     } catch (error) {
         console.error('Failed to load charts:', error);

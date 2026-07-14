@@ -116,9 +116,22 @@ html[dir="rtl"] .metric-value {
     align-items: center;
 }
 
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .nav-brand h1 {
     font-size: 1.5rem;
     color: var(--text-primary);
+}
+
+.site-logo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 6px;
 }
 
 .nav-menu {
@@ -168,7 +181,55 @@ html[dir="rtl"] .metric-value {
     border-color: var(--accent-purple);
 }
 
-/* Theme toggle: same compact square as the donate button */
+/* Theme toggle: a sliding switch with a sun and a moon. Kept LTR so the
+   sun is always on the left and the moon on the right, regardless of page
+   direction. The knob slides to the active side. */
+.theme-toggle {
+    position: relative;
+    direction: ltr;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 62px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    cursor: pointer;
+}
+
+.theme-toggle .theme-ic {
+    width: 15px;
+    height: 15px;
+    z-index: 1;
+}
+
+.theme-toggle .theme-ic-sun {
+    color: #e3a008;
+}
+
+.theme-toggle .theme-ic-moon {
+    color: #8b949e;
+}
+
+.theme-knob {
+    position: absolute;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--accent-purple);
+    transform: translateY(-50%);
+    transition: left 0.2s ease;
+    box-shadow: 0 1px 3px var(--shadow);
+}
+
+html[data-theme="light"] .theme-knob { left: 3px; }
+html[data-theme="dark"] .theme-knob { left: calc(100% - 27px); }
+
+/* Legacy square-icon button (donate keeps its own class) */
 .icon-btn {
     display: inline-flex;
     align-items: center;
@@ -499,9 +560,47 @@ section {
 }
 
 /* Air Quality */
+.aqi-grid {
+    grid-template-columns: minmax(240px, 1fr) minmax(280px, 1.4fr);
+}
+
+@media (max-width: 768px) {
+    .aqi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .aqi-card {
     text-align: center;
     border-width: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.aqi-gauge {
+    max-width: 260px;
+    margin: 0 auto;
+}
+
+.gauge-value {
+    fill: var(--text-primary);
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.gauge-rating {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.gauge-needle {
+    stroke: var(--text-primary);
+}
+
+.gauge-hub {
+    fill: var(--text-primary);
 }
 
 .aqi-badge {
@@ -522,6 +621,45 @@ section {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 4px;
+}
+
+/* Horizontal pollutant bars */
+.hbar-row {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.hbar-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.hbar-track {
+    height: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.hbar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.hbar-value {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.hbar-value small {
+    opacity: 0.7;
 }
 
 /* Charts */
