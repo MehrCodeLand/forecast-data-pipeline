@@ -102,9 +102,32 @@ async function loadSiteContent() {
         if (footerText && content.footer_text) {
             footerText.textContent = content.footer_text;
         }
+
+        // Custom site icon (admin-uploaded data: URL): use it for the browser
+        // tab favicon and as a small logo next to the site name in the navbar.
+        if (full.icon_data_url) {
+            applySiteIcon(full.icon_data_url);
+        }
         return content;
     } catch (error) {
         return null;
+    }
+}
+
+// Apply an admin-uploaded icon to the favicon and the navbar brand.
+function applySiteIcon(dataUrl) {
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')
+        .forEach(link => { link.href = dataUrl; });
+
+    const brand = document.querySelector('.nav-brand');
+    const siteName = document.getElementById('site-name');
+    if (brand && siteName && !document.getElementById('site-logo')) {
+        const img = document.createElement('img');
+        img.id = 'site-logo';
+        img.className = 'site-logo';
+        img.alt = '';
+        img.src = dataUrl;
+        brand.insertBefore(img, siteName);
     }
 }
 

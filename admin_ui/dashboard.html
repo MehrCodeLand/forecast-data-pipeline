@@ -61,6 +61,9 @@
         <div class="card">
             <h3>Cities</h3>
             <p>Every enabled city is collected on each scheduler run. Use the actions to collect immediately, open the full report, or download data per city.</p>
+            <div class="controls" style="margin-bottom:15px;">
+                <a class="btn" id="download-all-csv" href="{{ADMIN_PATH}}/api/download/all-csv">Download all cities (CSV)</a>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -111,6 +114,15 @@
                 <div class="form-field form-field-wide">
                     <label for="c-donate_url">Donate link (Buy me a coffee URL, shared by both languages)</label>
                     <input type="text" id="c-donate_url" placeholder="https://www.buymeacoffee.com/yourname">
+                </div>
+
+                <div class="form-field form-field-wide">
+                    <label for="c-icon-file">Site icon (browser tab + navbar logo, PNG/SVG, max ~150&nbsp;KB)</label>
+                    <div class="controls">
+                        <input type="file" id="c-icon-file" accept="image/png,image/jpeg,image/svg+xml,image/x-icon">
+                        <img id="c-icon-preview" alt="" style="display:none;width:32px;height:32px;object-fit:contain;border-radius:6px;">
+                        <button type="button" class="btn btn-small btn-secondary" id="c-icon-clear">Remove icon</button>
+                    </div>
                 </div>
 
                 <div class="content-lang-tabs">
@@ -287,10 +299,45 @@
             }
         }
 
+        // Holds the current site-icon data: URL (empty string = no icon).
+        let iconDataUrl = '';
+
+        function setIconPreview(url) {
+            const preview = document.getElementById('c-icon-preview');
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'inline-block';
+            } else {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+            }
+        }
+
+        document.getElementById('c-icon-file').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 150 * 1024) {
+                showMessage('Icon is larger than 150 KB - please use a smaller image.', 'error');
+                this.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => { iconDataUrl = reader.result; setIconPreview(iconDataUrl); };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('c-icon-clear').addEventListener('click', () => {
+            iconDataUrl = '';
+            document.getElementById('c-icon-file').value = '';
+            setIconPreview('');
+        });
+
         async function loadContent() {
             try {
                 const content = await adminRequest('/api/content');
                 document.getElementById('c-donate_url').value = content.donate_url || '';
+                iconDataUrl = content.icon_data_url || '';
+                setIconPreview(iconDataUrl);
                 CONTENT_LANGS.forEach(lang => {
                     const block = content[lang] || {};
                     CONTENT_FIELD_DEFS.forEach(def => {
@@ -384,7 +431,10 @@
             const btn = document.getElementById('save-content-btn');
             btn.disabled = true;
             try {
-                const body = { donate_url: document.getElementById('c-donate_url').value };
+                const body = {
+                    donate_url: document.getElementById('c-donate_url').value,
+                    icon_data_url: iconDataUrl
+                };
                 CONTENT_LANGS.forEach(lang => {
                     body[lang] = {};
                     CONTENT_FIELD_DEFS.forEach(def => {

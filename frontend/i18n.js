@@ -147,6 +147,12 @@ const I18N = {
         aqi_moderate: 'Moderate',
         aqi_poor: 'Poor',
         aqi_very_poor: 'Very Poor',
+        pollutants: 'Pollutants',
+        clouds: 'Clouds',
+        precip_sky: 'Precipitation & Sky',
+        precip_trend: 'Precipitation',
+        humidity_trend: 'Humidity & cloud cover',
+        no_precip: 'No precipitation recorded in this window.',
     },
     fa: {
         nav_home: 'خانه',
@@ -293,6 +299,12 @@ const I18N = {
         aqi_moderate: 'متوسط',
         aqi_poor: 'ناسالم',
         aqi_very_poor: 'بسیار ناسالم',
+        pollutants: 'آلاینده‌ها',
+        clouds: 'ابرناکی',
+        precip_sky: 'بارش و آسمان',
+        precip_trend: 'بارش',
+        humidity_trend: 'رطوبت و پوشش ابر',
+        no_precip: 'در این بازه بارشی ثبت نشده است.',
     }
 };
 
@@ -327,12 +339,6 @@ function applyLanguage() {
 // ---- Theme (light/dark). Default follows the system preference; the
 // navbar toggle overrides it and the choice persists. ----
 
-const THEME_ICONS = {
-    // shown on the button is the theme you would switch TO
-    sun: '<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM8 0a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1A.75.75 0 0 1 8 0Zm0 13.5a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1A.75.75 0 0 1 8 13.5ZM2.343 2.343a.75.75 0 0 1 1.061 0l.708.707a.75.75 0 0 1-1.061 1.061l-.708-.707a.75.75 0 0 1 0-1.061Zm9.545 9.545a.75.75 0 0 1 1.06 0l.708.708a.75.75 0 1 1-1.06 1.06l-.708-.707a.75.75 0 0 1 0-1.06ZM0 8a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1A.75.75 0 0 1 0 8Zm13.5 0a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1A.75.75 0 0 1 13.5 8ZM4.112 11.888a.75.75 0 0 1 0 1.06l-.708.708a.75.75 0 1 1-1.06-1.06l.707-.708a.75.75 0 0 1 1.06 0Zm9.545-9.545a.75.75 0 0 1 0 1.061l-.707.707a.75.75 0 1 1-1.061-1.06l.707-.708a.75.75 0 0 1 1.061 0Z"/></svg>',
-    moon: '<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/></svg>'
-};
-
 const CURRENT_THEME = (() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -346,11 +352,13 @@ function applyTheme() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = CURRENT_THEME === 'light' ? '#f6f8fa' : '#0d1117';
 
+    // The switch is static markup; the knob position is driven by the
+    // html[data-theme] CSS. Here we only wire the click and label.
     const toggle = document.getElementById('theme-toggle');
     if (toggle) {
-        toggle.innerHTML = CURRENT_THEME === 'light' ? THEME_ICONS.moon : THEME_ICONS.sun;
         toggle.setAttribute('aria-label', t('theme_toggle'));
         toggle.setAttribute('title', t('theme_toggle'));
+        toggle.setAttribute('aria-checked', CURRENT_THEME === 'dark' ? 'true' : 'false');
         toggle.addEventListener('click', () => {
             localStorage.setItem('theme', CURRENT_THEME === 'light' ? 'dark' : 'light');
             window.location.reload();

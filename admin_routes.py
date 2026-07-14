@@ -50,6 +50,7 @@ class SettingsRequest(BaseModel):
 
 class ContentRequest(BaseModel):
     donate_url: Optional[str] = None
+    icon_data_url: Optional[str] = None
     en: Optional[Dict[str, str]] = None
     fa: Optional[Dict[str, str]] = None
 
@@ -246,6 +247,29 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
             media_type="text/csv",
             headers={"Content-Disposition":
                      f'attachment; filename="weather_data_{city_record["id"]}.csv"'},
+        )
+
+    @router.get("/api/download/all-csv", dependencies=[Depends(require_admin)])
+    async def download_all_csv():
+        """One CSV with every city's records combined, prefixed by city columns."""
+        frames = []
+        for city in city_store.all():
+            data = await city_store.data_manager(city).read_data()
+            if not data:
+                continue
+            df = pd.DataFrame(data)
+            df.insert(0, "city_name", city["name"])
+            df.insert(0, "city_id", city["id"])
+            frames.append(df)
+        if not frames:
+            raise HTTPException(status_code=404, detail="No data collected for any city yet")
+        combined = pd.concat(frames, ignore_index=True, sort=False)
+        buffer = io.StringIO()
+        combined.to_csv(buffer, index=False)
+        return Response(
+            content=buffer.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="weather_data_all_cities.csv"'},
         )
 
     return router
