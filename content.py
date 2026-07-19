@@ -25,6 +25,9 @@ LANG_FIELDS = [
 # Shared (not per-language) string fields.
 SHARED_FIELDS = ["donate_url", "icon_data_url"]
 
+# Old default English site names that should be upgraded to the current one.
+OLD_SITE_NAMES = {"Weather Watch"}
+
 DEFAULT_CONTENT = {
     "donate_url": "https://www.buymeacoffee.com",
     # Custom site icon as a data: URL (set from the admin panel). Empty means
@@ -124,6 +127,7 @@ class ContentStore:
             for key in LANG_FIELDS:
                 if key in stored:
                     self._content["en"][key] = stored[key]
+            self._migrate()
             return
 
         for field in SHARED_FIELDS:
@@ -135,6 +139,15 @@ class ContentStore:
                 for key in LANG_FIELDS:
                     if isinstance(block.get(key), str):
                         self._content[lang][key] = block[key]
+        self._migrate()
+
+    def _migrate(self) -> None:
+        # One-off rename: sites created before the rebrand stored the old
+        # default English name. Treat that as "not customized" and use the
+        # current default so the English site shows HavaChetor, not the old
+        # placeholder.
+        if self._content["en"].get("site_name") in OLD_SITE_NAMES:
+            self._content["en"]["site_name"] = DEFAULT_CONTENT["en"]["site_name"]
 
     def get(self) -> Dict:
         return json.loads(json.dumps(self._content))

@@ -131,8 +131,15 @@ async def _fetch_openweather(lat: float, lon: float) -> Dict:
 
 async def collect_weather_snapshot(lat: float, lon: float,
                                    data_manager: JSONDataManager) -> Dict:
-    """Fetch one weather snapshot for a location and append it to its store."""
+    """Fetch one weather snapshot for a location and append it to its store.
+
+    A snapshot is only stored if it has a valid temperature, so a partial or
+    malformed API response never pollutes the data file with a junk record.
+    """
     weather_data = await fetch_current_weather(lat, lon)
+    if not isinstance(weather_data, dict) or not isinstance(
+            weather_data.get("temperature"), (int, float)):
+        raise ValueError("Fetched weather has no valid temperature; nothing stored")
     await data_manager.save_data(weather_data)
     return weather_data
 
