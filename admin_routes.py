@@ -23,6 +23,9 @@ from scheduler import WeatherScheduler
 ADMIN_PATH = admin_config["admin_path"]
 UI_DIR = Path(__file__).parent / "admin_ui"
 
+# Air-quality fields stored per snapshot (OpenWeather AQI + pollutants).
+AQI_FIELDS = ["aqi", "pm2_5", "pm10", "o3", "no2", "so2", "co", "no", "nh3"]
+
 
 class LoginRequest(BaseModel):
     username: str
@@ -145,21 +148,29 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
     async def overview():
         scheduler_status = scheduler.status()
         cities = []
+        aqi_records_total = 0
         for city in city_store.all():
             data = await city_store.data_manager(city).read_data()
             city_sched = scheduler_status["cities"].get(city["id"], {})
+            latest = data[-1] if data else {}
+            aqi_count = sum(1 for r in data if isinstance(r.get("aqi"), (int, float)))
+            aqi_records_total += aqi_count
             cities.append({
                 **city,
                 "records": len(data),
-                "last_record": data[-1].get("timestamp") if data else None,
+                "aqi_records": aqi_count,
+                "last_record": latest.get("timestamp"),
                 "last_success_at": city_sched.get("last_success_at"),
                 "last_error": city_sched.get("last_error"),
                 "collection_failures": city_sched.get("failures", 0),
+                # Latest air-quality reading for the monitor table.
+                "air": {k: latest.get(k) for k in AQI_FIELDS if latest.get(k) is not None},
             })
         return {
             "settings": {"fetch_interval_minutes": settings.fetch_interval_minutes},
             "scheduler": scheduler_status,
             "cities": cities,
+            "aqi_records_total": aqi_records_total,
         }
 
     # ----- city management -----
@@ -270,6 +281,52 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
             content=buffer.getvalue(),
             media_type="text/csv",
             headers={"Content-Disposition": 'attachment; filename="weather_data_all_cities.csv"'},
+        )
+
+    def _aqi_rows(city: Dict, records: list) -> list:
+        """AQI-only rows (city + timestamp + pollutants) for records that
+        actually carry an air-quality reading."""
+        rows = []
+        for r in records:
+            if not isinstance(r.get("aqi"), (int, float)):
+                continue
+            row = {
+                "city_id": city["id"],
+                "city_name": city["name"],
+                "time": r.get("time"),
+                "timestamp": r.get("timestamp"),
+            }
+            for field in AQI_FIELDS:
+                row[field] = r.get(field)
+            rows.append(row)
+        return rows
+
+    @router.get("/api/download/aqi-csv", dependencies=[Depends(require_admin)])
+    async def download_aqi_csv(city: str = Query("all", description="City id or 'all'")):
+        """Export all stored Air Quality data (all days) as CSV. `city=all`
+        combines every city; otherwise a single city."""
+        if city == "all":
+            targets = city_store.all()
+            filename = "air_quality_all_cities.csv"
+        else:
+            targets = [city_or_404(city)]
+            filename = f"air_quality_{city}.csv"
+
+        rows = []
+        for c in targets:
+            data = await city_store.data_manager(c).read_data()
+            rows.extend(_aqi_rows(c, data))
+
+        if not rows:
+            raise HTTPException(status_code=404, detail="No air-quality data collected yet")
+
+        columns = ["city_id", "city_name", "time", "timestamp"] + AQI_FIELDS
+        buffer = io.StringIO()
+        pd.DataFrame(rows, columns=columns).to_csv(buffer, index=False)
+        return Response(
+            content=buffer.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     return router
