@@ -154,6 +154,29 @@ function renderAirQualityCards(summary) {
         .filter(p => current[p.key] != null)
         .map(p => ({ label: p.label, value: current[p.key], max: p.max, unit: 'µg/m³' }));
     renderHBars(document.getElementById('pollutant-bars'), items);
+
+    renderAirAdvice(aqi, items);
+}
+
+// Plain-language health guidance from the current AQI level, plus the main
+// pollutant (the one highest relative to its reference level).
+function renderAirAdvice(aqi, pollutantItems) {
+    const card = document.getElementById('aqi-advice-card');
+    const el = document.getElementById('aqi-advice');
+    if (!card || !el || typeof aqi !== 'number') {
+        if (card) card.style.display = 'none';
+        return;
+    }
+    const level = Math.max(1, Math.min(5, Math.round(aqi)));
+    let text = t('aqi_advice_' + level);
+
+    if (pollutantItems && pollutantItems.length) {
+        const dominant = pollutantItems.reduce((a, b) =>
+            (b.value / b.max) > (a.value / a.max) ? b : a);
+        text += ' ' + t('main_pollutant').replace('{p}', dominant.label);
+    }
+    el.textContent = text;
+    card.style.display = '';
 }
 
 async function loadCharts(period) {
@@ -287,6 +310,82 @@ async function loadWind(period) {
     setText('wind-variability', fmt(variability.direction_variability));
 }
 
+function localTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const locale = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'fa') ? 'fa-IR' : 'en-US';
+    return d.toLocaleString(locale, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+}
+
+// Naive short-term projection: draws the forecast points as a dashed-looking
+// line (rendered as a normal line here) with a clear "estimate" note.
+async function loadForecast() {
+    const section = document.getElementById('forecast-section');
+    try {
+        const temp = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/forecast?field=temperature&hours=6`).catch(() => null);
+        if (temp && temp.forecast) {
+            section.style.display = '';
+            renderLineChart(document.getElementById('temp-forecast-chart'),
+                temp.forecast.map(p => ({ label: localTime(p.time), y: p.value })),
+                { color: '#f0883e', unit: 'C', emptyText: t('chart_empty') });
+        } else {
+            section.style.display = 'none';
+            return;
+        }
+
+        const aqi = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/forecast?field=aqi&hours=6`).catch(() => null);
+        const aqiCard = document.getElementById('aqi-forecast-card');
+        if (aqi && aqi.forecast) {
+            aqiCard.style.display = '';
+            renderLineChart(document.getElementById('aqi-forecast-chart'),
+                aqi.forecast.map(p => ({ label: localTime(p.time), y: p.value })),
+                { color: '#a371f7', unit: 'AQI', emptyText: t('chart_empty') });
+        } else {
+            aqiCard.style.display = 'none';
+        }
+    } catch (error) {
+        section.style.display = 'none';
+    }
+}
+
+async function loadPatterns() {
+    const section = document.getElementById('patterns-section');
+    const weekdays = (typeof I18N !== 'undefined' && I18N[CURRENT_LANG] && I18N[CURRENT_LANG].weekdays)
+        || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    try {
+        const temp = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/patterns?field=temperature`).catch(() => null);
+        if (!temp || !temp.grid) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = '';
+        renderHeatmap(document.getElementById('temp-heatmap'), {
+            grid: temp.grid, min: temp.min, max: temp.max,
+            colors: ['#58a6ff', '#3fb950', '#f0883e', '#f85149'],
+            rowLabels: weekdays, unit: 'C', emptyText: t('chart_empty')
+        });
+
+        const aqi = await apiRequest(
+            `/cities/${encodeURIComponent(CITY_ID)}/patterns?field=aqi`).catch(() => null);
+        const aqiCard = document.getElementById('aqi-pattern-card');
+        if (aqi && aqi.grid) {
+            aqiCard.style.display = '';
+            renderHeatmap(document.getElementById('aqi-heatmap'), {
+                grid: aqi.grid, min: aqi.min, max: aqi.max,
+                colors: ['#3fb950', '#d29922', '#f85149'],
+                rowLabels: weekdays, unit: 'AQI', emptyText: t('chart_empty')
+            });
+        } else {
+            aqiCard.style.display = 'none';
+        }
+    } catch (error) {
+        section.style.display = 'none';
+    }
+}
+
 async function loadCalmPeriods() {
     const period = document.getElementById('period').value;
     const threshold = document.getElementById('calm-threshold').value;
@@ -355,6 +454,8 @@ async function loadCityDashboard() {
             loadSummary(period),
             loadCharts(period),
             loadRecords(),
+            loadForecast(),
+            loadPatterns(),
             loadTemperature(period),
             loadWind(period),
             loadCalmPeriods(),

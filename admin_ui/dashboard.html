@@ -83,6 +83,34 @@
         </div>
 
         <div class="card">
+            <h3>Air Quality Monitor</h3>
+            <p>Current air-quality reading per city (AQI 1&nbsp;=&nbsp;good &rarr; 5&nbsp;=&nbsp;very poor). All pollutants are stored on every collection; export the full history as CSV for reports.</p>
+            <div class="controls" style="margin-bottom:15px;">
+                <a class="btn" id="export-aqi-all" href="{{ADMIN_PATH}}/api/download/aqi-csv?city=all">Export all AQI data (CSV)</a>
+                <span class="badge badge-success" id="aqi-total-badge">-- readings stored</span>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>AQI</th>
+                            <th>PM2.5</th>
+                            <th>PM10</th>
+                            <th>O&#8323;</th>
+                            <th>NO&#8322;</th>
+                            <th>SO&#8322;</th>
+                            <th>CO</th>
+                            <th>Stored</th>
+                            <th>Export</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aqi-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>Add City</h3>
             <form id="add-city-form">
                 <div class="form-grid">
@@ -272,6 +300,49 @@
             return tr;
         }
 
+        const AQI_LABELS = {
+            1: { text: 'Good', color: '#3fb950' },
+            2: { text: 'Fair', color: '#b8c832' },
+            3: { text: 'Moderate', color: '#d29922' },
+            4: { text: 'Poor', color: '#f0883e' },
+            5: { text: 'Very Poor', color: '#f85149' }
+        };
+
+        function renderAqiMonitor(overview) {
+            document.getElementById('aqi-total-badge').textContent =
+                `${fmt(overview.aqi_records_total)} readings stored`;
+
+            const tbody = document.getElementById('aqi-tbody');
+            tbody.innerHTML = '';
+            overview.cities.forEach(city => {
+                const air = city.air || {};
+                const level = AQI_LABELS[air.aqi];
+                const aqiCell = level
+                    ? `<span class="badge" style="background:${level.color};color:#fff;border:none">${air.aqi} ${level.text}</span>`
+                    : '--';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${city.name}</td>
+                    <td>${aqiCell}</td>
+                    <td>${fmt(air.pm2_5)}</td>
+                    <td>${fmt(air.pm10)}</td>
+                    <td>${fmt(air.o3)}</td>
+                    <td>${fmt(air.no2)}</td>
+                    <td>${fmt(air.so2)}</td>
+                    <td>${fmt(air.co)}</td>
+                    <td>${fmt(city.aqi_records)}</td>
+                    <td></td>
+                `;
+                const link = document.createElement('a');
+                link.className = 'btn btn-small btn-secondary';
+                link.textContent = 'CSV';
+                link.href = `${ADMIN_PATH}/api/download/aqi-csv?city=${city.id}`;
+                tr.querySelector('td:last-child').appendChild(link);
+                tbody.appendChild(tr);
+            });
+        }
+
         async function loadOverview() {
             try {
                 const overview = await adminRequest('/api/overview');
@@ -292,6 +363,8 @@
                 const tbody = document.getElementById('cities-tbody');
                 tbody.innerHTML = '';
                 overview.cities.forEach(city => tbody.appendChild(cityRow(city)));
+
+                renderAqiMonitor(overview);
             } catch (error) {
                 if (error.message !== 'Not authenticated') {
                     showMessage(error.message, 'error');

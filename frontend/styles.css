@@ -662,6 +662,78 @@ section {
     opacity: 0.7;
 }
 
+/* Heatmap (hour-of-day x weekday) */
+.heatmap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.hm-grid {
+    display: grid;
+    grid-template-columns: 34px repeat(24, 1fr);
+    gap: 2px;
+    min-width: 460px;
+}
+
+.hm-cell {
+    aspect-ratio: 1 / 1;
+    border-radius: 2px;
+}
+
+.hm-corner {
+    background: transparent;
+}
+
+.hm-hlabel,
+.hm-rlabel {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hm-rlabel {
+    justify-content: flex-end;
+    padding-inline-end: 6px;
+    font-size: 0.72rem;
+}
+
+.hm-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    direction: ltr;
+}
+
+.hm-scale {
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    max-width: 220px;
+}
+
+.forecast-note {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.aqi-advice {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    border-inline-start: 4px solid var(--accent-purple);
+}
+
 /* Charts */
 .chart-grid {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
