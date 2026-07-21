@@ -350,3 +350,121 @@ class Analyse:
         except Exception as e:
             logger.error(f"Error in get_records: {e}")
             return None
+
+    def _record_time(self, record: Dict) -> Optional[datetime]:
+        """Best available datetime for a record: stored timestamp, else the
+        source 'time' field."""
+        dt = _parse_timestamp(record)
+        if dt is not None:
+            return dt
+        try:
+            return datetime.fromisoformat(record["time"])
+        except (KeyError, ValueError, TypeError):
+            return None
+
+    async def get_heatmap(self, field: str) -> Optional[Dict]:
+        """Average of `field` by weekday (0=Mon..6=Sun) and hour-of-day.
+
+        Returns a 7x24 grid of averages (None where no data), plus the global
+        min/max for color scaling and per-cell counts. Powers the
+        hour-of-day vs weekday heatmap.
+        """
+        try:
+            data = await self.json_manager.read_data()
+            if not data:
+                return None
+
+            sums = [[0.0] * 24 for _ in range(7)]
+            counts = [[0] * 24 for _ in range(7)]
+            has_any = False
+            for r in data:
+                value = r.get(field)
+                dt = self._record_time(r)
+                if dt is None or not isinstance(value, (int, float)):
+                    continue
+                sums[dt.weekday()][dt.hour] += value
+                counts[dt.weekday()][dt.hour] += 1
+                has_any = True
+
+            if not has_any:
+                return None
+
+            grid = [[round(sums[d][h] / counts[d][h], 2) if counts[d][h] else None
+                     for h in range(24)] for d in range(7)]
+            flat = [v for row in grid for v in row if v is not None]
+
+            return {
+                "field": field,
+                "grid": grid,
+                "counts": counts,
+                "min": round(min(flat), 2),
+                "max": round(max(flat), 2),
+                "samples": len(flat),
+            }
+        except Exception as e:
+            logger.error(f"Error in get_heatmap({field}): {e}")
+            return None
+
+    async def get_forecast(self, field: str, steps: int = 6,
+                           window: int = 12) -> Optional[Dict]:
+        """Naive short-term projection of `field` for the next `steps` hours.
+
+        Fits a least-squares line to the most recent `window` records (spaced
+        by their real timestamps) and extends it. This is a simple trend
+        estimate, NOT a meteorological forecast - the response is labelled so
+        the UI can say so.
+        """
+        try:
+            data = await self.json_manager.read_data()
+            if not data:
+                return None
+
+            points = []
+            for r in data[-window:]:
+                dt = self._record_time(r)
+                value = r.get(field)
+                if dt is not None and isinstance(value, (int, float)):
+                    points.append((dt, value))
+            if len(points) < 3:
+                return None
+
+            base = points[0][0]
+            xs = [(dt - base).total_seconds() / 3600 for dt, _ in points]
+            ys = [v for _, v in points]
+            n = len(xs)
+
+            mean_x = sum(xs) / n
+            mean_y = sum(ys) / n
+            denom = sum((x - mean_x) ** 2 for x in xs)
+            if denom == 0:
+                return None
+            slope = sum((xs[i] - mean_x) * (ys[i] - mean_y) for i in range(n)) / denom
+            intercept = mean_y - slope * mean_x
+
+            last_dt, _ = points[-1]
+            last_x = xs[-1]
+
+            # Clamp AQI-style indices to their valid 1..5 range.
+            clamp = (1, 5) if field == "aqi" else None
+            from datetime import timedelta
+            forecast = []
+            for step in range(1, steps + 1):
+                x = last_x + step
+                y = slope * x + intercept
+                if clamp:
+                    y = max(clamp[0], min(clamp[1], y))
+                forecast.append({
+                    "time": (last_dt + timedelta(hours=step)).isoformat(),
+                    "value": round(y, 2),
+                })
+
+            return {
+                "field": field,
+                "method": "linear-trend",
+                "slope_per_hour": round(slope, 3),
+                "based_on": n,
+                "forecast": forecast,
+            }
+        except Exception as e:
+            logger.error(f"Error in get_forecast({field}): {e}")
+            return None

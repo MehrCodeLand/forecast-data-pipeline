@@ -76,6 +76,10 @@
         <section id="air-quality-section" style="display: none;">
             <h2 class="section-title" data-i18n="air_quality">Air Quality</h2>
             <div id="air-quality-grid" class="card-grid aqi-grid"></div>
+            <div class="card" id="aqi-advice-card" style="display:none;">
+                <h3 data-i18n="health_advice">Health Advice</h3>
+                <p id="aqi-advice" class="aqi-advice"></p>
+            </div>
             <div class="card-grid chart-grid">
                 <div class="card">
                     <h3 data-i18n="aqi_trend">Air Quality Index over time</h3>
@@ -112,6 +116,37 @@
                 <div class="card">
                     <h3 data-i18n="wind_trend">Wind speed over time</h3>
                     <div id="wind-chart" class="chart-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="forecast-section" style="display: none;">
+            <h2 class="section-title" data-i18n="forecast">Short-term Trend Estimate</h2>
+            <div class="card-grid chart-grid">
+                <div class="card">
+                    <h3 data-i18n="temp_forecast">Temperature — next hours</h3>
+                    <div id="temp-forecast-chart" class="chart-container"></div>
+                    <p class="forecast-note" data-i18n="forecast_note">A naive projection of recent readings, not a meteorological forecast.</p>
+                </div>
+                <div class="card" id="aqi-forecast-card" style="display:none;">
+                    <h3 data-i18n="aqi_forecast">Air Quality Index — next hours</h3>
+                    <div id="aqi-forecast-chart" class="chart-container"></div>
+                    <p class="forecast-note" data-i18n="forecast_note">A naive projection of recent readings, not a meteorological forecast.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="patterns-section" style="display: none;">
+            <h2 class="section-title" data-i18n="patterns">Patterns by Hour &amp; Day</h2>
+            <p class="page-lead" data-i18n="patterns_note">Average by hour of day (columns) and day of week (rows), across all collected history.</p>
+            <div class="card-grid chart-grid">
+                <div class="card">
+                    <h3 data-i18n="temp_pattern">Temperature pattern</h3>
+                    <div id="temp-heatmap"></div>
+                </div>
+                <div class="card" id="aqi-pattern-card" style="display:none;">
+                    <h3 data-i18n="aqi_pattern">Air Quality Index pattern</h3>
+                    <div id="aqi-heatmap"></div>
                 </div>
             </div>
         </section>

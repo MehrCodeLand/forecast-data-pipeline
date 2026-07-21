@@ -290,3 +290,61 @@ function renderHBars(container, items) {
         `;
     }).join('');
 }
+
+// Hour-of-day (x, 24 cols) by weekday (y, 7 rows) heatmap. grid is a 7x24
+// array of numbers or null. Cells are colored between the given stop colors
+// by value; empty cells are muted. rowLabels/colLabels label the axes.
+function renderHeatmap(container, opts) {
+    const grid = opts.grid || [];
+    const min = opts.min, max = opts.max;
+    const stops = opts.colors || ['#58a6ff', '#f0883e'];
+    const rowLabels = opts.rowLabels || [];
+    const colLabels = opts.colLabels || [];
+    const unit = opts.unit || '';
+
+    if (!grid.length || min === undefined || max === undefined) {
+        container.innerHTML = `<p class="chart-empty">${opts.emptyText || ''}</p>`;
+        return;
+    }
+
+    const hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+    const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+    function colorFor(v) {
+        if (v === null || v === undefined) return 'var(--bg-tertiary)';
+        const t = max === min ? 0.5 : (v - min) / (max - min);
+        // interpolate across the stop list
+        const seg = t * (stops.length - 1);
+        const i = Math.min(Math.floor(seg), stops.length - 2);
+        const local = seg - i;
+        const c1 = hex(stops[i]), c2 = hex(stops[i + 1]);
+        return `rgb(${lerp(c1[0], c2[0], local)},${lerp(c1[1], c2[1], local)},${lerp(c1[2], c2[2], local)})`;
+    }
+
+    let header = '<div class="hm-cell hm-corner"></div>';
+    for (let h = 0; h < 24; h++) {
+        header += `<div class="hm-hlabel">${h % 3 === 0 ? h : ''}</div>`;
+    }
+
+    let rows = '';
+    for (let d = 0; d < grid.length; d++) {
+        rows += `<div class="hm-rlabel">${rowLabels[d] || d}</div>`;
+        for (let h = 0; h < 24; h++) {
+            const v = grid[d][h];
+            const title = v === null || v === undefined
+                ? `${rowLabels[d] || ''} ${h}:00`
+                : `${rowLabels[d] || ''} ${h}:00 — ${v}${unit ? ' ' + unit : ''}`;
+            rows += `<div class="hm-cell" style="background:${colorFor(v)}" title="${title}"></div>`;
+        }
+    }
+
+    container.innerHTML = `
+        <div class="heatmap" style="direction:ltr">
+            <div class="hm-grid">${header}${rows}</div>
+            <div class="hm-legend">
+                <span>${min}${unit ? ' ' + unit : ''}</span>
+                <span class="hm-scale" style="background:linear-gradient(to right, ${stops.join(',')})"></span>
+                <span>${max}${unit ? ' ' + unit : ''}</span>
+            </div>
+        </div>
+    `;
+}

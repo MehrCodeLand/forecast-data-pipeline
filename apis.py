@@ -171,6 +171,29 @@ async def city_records(city_id: str,
     return {"city": city["id"], "records": result}
 
 
+@app.get("/cities/{city_id}/patterns")
+async def city_patterns(city_id: str, field: str = Query("temperature")):
+    city = get_city_or_404(city_id)
+    if field not in ("temperature", "aqi", "windspeed", "humidity", "pm2_5"):
+        raise HTTPException(status_code=400, detail="Unsupported field")
+    result = await analyser_for(city).get_heatmap(field)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Not enough data for patterns")
+    return {"city": city["id"], **result}
+
+
+@app.get("/cities/{city_id}/forecast")
+async def city_forecast(city_id: str, field: str = Query("temperature"),
+                        hours: int = Query(6, ge=1, le=24)):
+    city = get_city_or_404(city_id)
+    if field not in ("temperature", "aqi", "windspeed", "humidity", "pm2_5"):
+        raise HTTPException(status_code=400, detail="Unsupported field")
+    result = await analyser_for(city).get_forecast(field, steps=hours)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Not enough data to forecast")
+    return {"city": city["id"], **result}
+
+
 @app.get("/cities/{city_id}/temperature/average")
 async def city_avg_temperature(city_id: str, period: int = Query(24, ge=1)):
     city = get_city_or_404(city_id)
