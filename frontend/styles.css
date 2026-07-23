@@ -241,6 +241,132 @@ html[data-theme="dark"] .theme-knob { left: calc(100% - 27px); }
     border-radius: 8px;
 }
 
+/* Modal (Buy me a coffee) */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    position: relative;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px var(--shadow);
+    transform: translateY(12px);
+    transition: transform 0.2s ease;
+}
+
+.modal-overlay.show .modal-card {
+    transform: translateY(0);
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px;
+    inset-inline-end: 14px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-title {
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+    color: var(--text-primary);
+}
+
+.modal-text {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.8;
+    margin-bottom: 12px;
+}
+
+.modal-pick {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 16px 0 10px;
+}
+
+.coffee-tiers {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.coffee-tier {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: start;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.coffee-tier:hover {
+    border-color: var(--accent-purple);
+}
+
+.coffee-tier.selected {
+    border-color: var(--accent-purple);
+    background: var(--bg-secondary);
+}
+
+.coffee-cup {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.coffee-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.coffee-price {
+    color: var(--accent-purple);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.donate-continue {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+}
+
 /* Coming-soon toast */
 .app-toast {
     position: fixed;
