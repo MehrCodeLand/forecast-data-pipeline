@@ -108,6 +108,8 @@ async function loadSiteContent() {
         if (full.icon_data_url) {
             applySiteIcon(full.icon_data_url);
         }
+        // Optional payment/checkout URL the coffee modal continues to.
+        SITE_DONATE_URL = (typeof full.donate_url === 'string') ? full.donate_url.trim() : '';
         return content;
     } catch (error) {
         return null;
@@ -147,13 +149,91 @@ function showToast(message) {
     showToast._timer = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
+// ----- "Buy me a coffee" modal -----
+
+// Optional checkout URL the modal's Continue button opens (set by the admin
+// via Site Content -> donate link). Empty means "coming soon".
+let SITE_DONATE_URL = '';
+
+// Coffee tiers. Amounts in Toman; names come from i18n so they localize.
+const COFFEE_TIERS = [
+    { id: 'espresso', nameKey: 'coffee_espresso', toman: 50000 },
+    { id: 'americano', nameKey: 'coffee_americano', toman: 75000 },
+    { id: 'coldbrew', nameKey: 'coffee_coldbrew', toman: 100000 }
+];
+
+function formatToman(amount) {
+    const locale = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'fa') ? 'fa-IR' : 'en-US';
+    return `${amount.toLocaleString(locale)} ${t('toman')}`;
+}
+
+function openDonateModal() {
+    let overlay = document.getElementById('donate-overlay');
+    if (overlay) { overlay.classList.add('show'); return; }
+
+    overlay = document.createElement('div');
+    overlay.id = 'donate-overlay';
+    overlay.className = 'modal-overlay';
+
+    const tiers = COFFEE_TIERS.map((tier, i) => `
+        <button type="button" class="coffee-tier${i === 0 ? ' selected' : ''}" data-id="${tier.id}">
+            <span class="coffee-cup">☕</span>
+            <span class="coffee-name">${t(tier.nameKey)}</span>
+            <span class="coffee-price">${formatToman(tier.toman)}</span>
+        </button>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="${t('donate_title')}">
+            <button type="button" class="modal-close" aria-label="${t('donate_close')}">&times;</button>
+            <h3 class="modal-title">${t('donate_title')}</h3>
+            <p class="modal-text">${t('donate_intro')}</p>
+            <p class="modal-text">${t('donate_where')}</p>
+            <p class="modal-pick">${t('donate_pick')}</p>
+            <div class="coffee-tiers">${tiers}</div>
+            <button type="button" class="btn donate-continue" id="donate-continue">${t('donate_continue')}</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    let selected = COFFEE_TIERS[0].id;
+    overlay.querySelectorAll('.coffee-tier').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selected = btn.dataset.id;
+            overlay.querySelectorAll('.coffee-tier').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+    });
+
+    const close = () => overlay.classList.remove('show');
+    overlay.querySelector('.modal-close').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+    overlay.querySelector('#donate-continue').addEventListener('click', () => {
+        const tier = COFFEE_TIERS.find(x => x.id === selected);
+        // Only use a real checkout URL. The bare buymeacoffee.com homepage is
+        // the placeholder default and doesn't accept Toman amounts, so treat
+        // it as "not configured yet" and show the thank-you/coming-soon note.
+        const isRealCheckout = SITE_DONATE_URL && !/^https?:\/\/(www\.)?buymeacoffee\.com\/?$/i.test(SITE_DONATE_URL);
+        if (isRealCheckout) {
+            const sep = SITE_DONATE_URL.includes('?') ? '&' : '?';
+            window.open(`${SITE_DONATE_URL}${sep}amount=${tier.toman}`, '_blank', 'noopener');
+        } else {
+            showToast(t('donate_soon'));
+        }
+        close();
+    });
+}
+
 // Attach immediately: scripts sit at the end of the body so the button
 // already exists, and this keeps the handler independent of load-event
 // timing (the button must always respond to clicks).
 (() => {
     const donate = document.getElementById('donate-link');
     if (donate) {
-        donate.addEventListener('click', () => showToast(t('coming_soon')));
+        donate.addEventListener('click', openDonateModal);
     }
 })();
 
