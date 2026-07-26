@@ -16,6 +16,11 @@ services:
       # collect richer weather + air pollution from OpenWeather. Empty ->
       # the keyless Open-Meteo source is used.
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      # Zibal payment gateway. "zibal" is the sandbox merchant; put the real
+      # key in .env. SITE_BASE_URL must be the public address of the site so
+      # the gateway can redirect back after payment.
+      - ZIBAL_MERCHANT=${ZIBAL_MERCHANT:-zibal}
+      - SITE_BASE_URL=${SITE_BASE_URL:-}
     restart: unless-stopped
 
   frontend:

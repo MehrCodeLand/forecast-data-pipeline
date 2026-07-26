@@ -191,6 +191,17 @@ function openDonateModal() {
             <p class="modal-text">${t('donate_where')}</p>
             <p class="modal-pick">${t('donate_pick')}</p>
             <div class="coffee-tiers">${tiers}</div>
+            <div class="donate-fields">
+                <div class="form-field">
+                    <label for="donate-first">${t('first_name')}</label>
+                    <input type="text" id="donate-first" maxlength="60" autocomplete="given-name">
+                </div>
+                <div class="form-field">
+                    <label for="donate-last">${t('last_name')}</label>
+                    <input type="text" id="donate-last" maxlength="60" autocomplete="family-name">
+                </div>
+            </div>
+            <p class="donate-error" id="donate-error"></p>
             <button type="button" class="btn donate-continue" id="donate-continue">${t('donate_continue')}</button>
         </div>
     `;
@@ -211,19 +222,40 @@ function openDonateModal() {
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
-    overlay.querySelector('#donate-continue').addEventListener('click', () => {
-        const tier = COFFEE_TIERS.find(x => x.id === selected);
-        // Only use a real checkout URL. The bare buymeacoffee.com homepage is
-        // the placeholder default and doesn't accept Toman amounts, so treat
-        // it as "not configured yet" and show the thank-you/coming-soon note.
-        const isRealCheckout = SITE_DONATE_URL && !/^https?:\/\/(www\.)?buymeacoffee\.com\/?$/i.test(SITE_DONATE_URL);
-        if (isRealCheckout) {
-            const sep = SITE_DONATE_URL.includes('?') ? '&' : '?';
-            window.open(`${SITE_DONATE_URL}${sep}amount=${tier.toman}`, '_blank', 'noopener');
-        } else {
-            showToast(t('donate_soon'));
+    const errorEl = overlay.querySelector('#donate-error');
+    const continueBtn = overlay.querySelector('#donate-continue');
+
+    continueBtn.addEventListener('click', async () => {
+        const first = overlay.querySelector('#donate-first').value.trim();
+        const last = overlay.querySelector('#donate-last').value.trim();
+        errorEl.textContent = '';
+
+        if (!first || !last) {
+            errorEl.textContent = t('donate_name_required');
+            return;
         }
-        close();
+
+        continueBtn.disabled = true;
+        continueBtn.textContent = t('donate_redirecting');
+        try {
+            const res = await fetch(`${API_BASE_URL}/payment/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first_name: first, last_name: last, tier_id: selected })
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.detail || `HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            // Hand the visitor over to the Zibal payment page.
+            window.location.href = data.payment_url;
+        } catch (err) {
+            console.error('Payment request failed:', err);
+            errorEl.textContent = t('donate_error');
+            continueBtn.disabled = false;
+            continueBtn.textContent = t('donate_continue');
+        }
     });
 }
 

@@ -16,7 +16,9 @@ from admin_auth import (SESSION_COOKIE, admin_config, create_session,
 from analyse import Analyse
 from cities import CityStore
 from config import settings
+import payments
 from content import content_store
+from payments import payment_store
 from report import build_report_data, render_report_html, render_report_pdf
 from scheduler import WeatherScheduler
 
@@ -300,6 +302,49 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
                 row[field] = r.get(field)
             rows.append(row)
         return rows
+
+    # ----- payments -----
+
+    @router.get("/api/payments", dependencies=[Depends(require_admin)])
+    async def list_payments():
+        """All payment attempts, newest first, plus totals."""
+        items = payment_store.all()
+        items.reverse()
+        return {"stats": payment_store.stats(), "payments": items}
+
+    @router.post("/api/payments/{track_id}/recheck", dependencies=[Depends(require_admin)])
+    async def recheck_payment(track_id: str):
+        """Re-verify a payment that was left pending (e.g. the callback's
+        verify call could not reach the gateway)."""
+        try:
+            record = await payments.verify_payment(track_id)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except RuntimeError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        return {"rechecked": True, "payment": record}
+
+    @router.get("/api/download/payments-csv", dependencies=[Depends(require_admin)])
+    async def download_payments_csv(only_paid: bool = Query(False)):
+        rows = payment_store.paid() if only_paid else payment_store.all()
+        if not rows:
+            raise HTTPException(status_code=404, detail="No payments recorded yet")
+        columns = ["created_at", "paid_at", "first_name", "last_name", "tier_name",
+                   "amount_toman", "amount_rial", "status", "order_id", "track_id",
+                   "ref_number", "card_number", "zibal_status", "message"]
+        df = pd.DataFrame(rows).reindex(columns=columns)
+        # Missing values in an int column make pandas emit floats ("123.0");
+        # keep reference/status numbers readable as plain integers.
+        for col in ("ref_number", "zibal_status", "track_id"):
+            df[col] = df[col].map(lambda v: "" if pd.isna(v) else str(int(v))
+                                  if isinstance(v, (int, float)) else str(v))
+        buffer = io.StringIO()
+        df.to_csv(buffer, index=False)
+        return Response(
+            content=buffer.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="payments.csv"'},
+        )
 
     @router.get("/api/download/aqi-csv", dependencies=[Depends(require_admin)])
     async def download_aqi_csv(city: str = Query("all", description="City id or 'all'")):

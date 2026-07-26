@@ -29,7 +29,26 @@ class Settings:
         self.openweather_weather_url = "https://api.openweathermap.org/data/2.5/weather"
         self.openweather_air_url = "https://api.openweathermap.org/data/2.5/air_pollution"
 
+        # Zibal payment gateway. ZIBAL_MERCHANT comes from the environment
+        # (.env on the server); the literal "zibal" is Zibal's own sandbox
+        # merchant, so the flow stays testable without a real key.
+        self.zibal_merchant = os.getenv("ZIBAL_MERCHANT", "zibal").strip() or "zibal"
+        self.zibal_request_url = "https://gateway.zibal.ir/v1/request"
+        self.zibal_verify_url = "https://gateway.zibal.ir/v1/verify"
+        self.zibal_inquiry_url = "https://gateway.zibal.ir/v1/inquiry"
+        self.zibal_start_url = "https://gateway.zibal.ir/start/"
+
+        # Public base URL of the site, used to build the payment callback and
+        # the result page (e.g. https://havachetor.ir). When empty it is
+        # derived from the incoming request.
+        self.site_base_url = os.getenv("SITE_BASE_URL", "").strip().rstrip("/")
+
         self._load_overrides()
+
+    @property
+    def payments_enabled(self) -> bool:
+        """True when a real (non-sandbox) merchant key is configured."""
+        return bool(self.zibal_merchant) and self.zibal_merchant != "zibal"
 
     @property
     def source(self) -> str:
