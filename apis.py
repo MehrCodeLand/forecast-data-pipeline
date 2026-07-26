@@ -2,14 +2,17 @@ from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from loguru import logger
+from pydantic import BaseModel, Field
 
+import payments
 from admin_routes import create_admin_router
 from analyse import Analyse
 from cities import city_store
+from config import settings
 from content import content_store
 from scheduler import WeatherScheduler
 
@@ -37,11 +40,105 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
 app.include_router(create_admin_router(city_store, scheduler))
+
+
+# ----- payments (Zibal) -----
+
+class PaymentRequest(BaseModel):
+    first_name: str = Field(min_length=1, max_length=60)
+    last_name: str = Field(min_length=1, max_length=60)
+    tier_id: str = Field(min_length=1, max_length=30)
+    mobile: Optional[str] = Field(default=None, max_length=15)
+
+
+def _site_base(request: Request) -> str:
+    """Public base URL of the site (no trailing slash).
+
+    Prefers SITE_BASE_URL from the environment; falls back to the origin the
+    request arrived on, honouring the proxy's forwarded headers.
+    """
+    if settings.site_base_url:
+        return settings.site_base_url
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    return f"{proto}://{host}".rstrip("/")
+
+
+@app.get("/payment/tiers")
+async def payment_tiers():
+    """Coffee tiers and prices. The server is the source of truth for amounts."""
+    return {
+        "enabled": settings.payments_enabled,
+        "currency": "toman",
+        "tiers": [
+            {"id": tid, "name_en": t["name_en"], "name_fa": t["name_fa"],
+             "toman": t["toman"]}
+            for tid, t in payments.COFFEE_TIERS.items()
+        ],
+    }
+
+
+@app.post("/payment/request")
+async def payment_request(body: PaymentRequest, request: Request):
+    """Start a payment: register the order with Zibal and return its URL."""
+    base = _site_base(request)
+    callback_url = f"{base}/api/payment/callback"
+    try:
+        result = await payments.create_payment(
+            first_name=body.first_name,
+            last_name=body.last_name,
+            tier_id=body.tier_id,
+            callback_url=callback_url,
+            mobile=body.mobile,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return result
+
+
+@app.get("/payment/callback")
+async def payment_callback(request: Request,
+                           trackId: Optional[str] = Query(None),
+                           success: Optional[str] = Query(None),
+                           status: Optional[str] = Query(None),
+                           orderId: Optional[str] = Query(None)):
+    """Zibal returns the user here; verify and send them to the result page.
+
+    The query string is never trusted on its own - a payment is only marked
+    paid after /v1/verify confirms it.
+    """
+    base = _site_base(request)
+    result_page = f"{base}/payment.html"
+
+    if not trackId:
+        return RedirectResponse(f"{result_page}?status=failed&reason=missing_track", 303)
+
+    if success != "1":
+        payments.mark_failed(trackId, f"gateway status {status}")
+        return RedirectResponse(f"{result_page}?status=failed&track={trackId}", 303)
+
+    try:
+        record = await payments.verify_payment(trackId)
+    except ValueError:
+        return RedirectResponse(f"{result_page}?status=failed&reason=unknown_track", 303)
+    except RuntimeError:
+        # Verification could not run; the record stays pending so it can be
+        # retried/inspected from the admin panel instead of being lost.
+        return RedirectResponse(f"{result_page}?status=pending&track={trackId}", 303)
+
+    if record.get("status") == "paid":
+        return RedirectResponse(
+            f"{result_page}?status=success&track={trackId}"
+            f"&amount={record.get('amount_toman', '')}"
+            f"&ref={record.get('ref_number') or ''}", 303)
+    return RedirectResponse(f"{result_page}?status=failed&track={trackId}", 303)
 
 
 def get_city_or_404(city_id: str) -> Dict:

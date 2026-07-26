@@ -111,6 +111,33 @@
         </div>
 
         <div class="card">
+            <h3>Payments</h3>
+            <p>Coffee support payments received through the Zibal gateway. Only payments confirmed by the gateway are marked <strong>paid</strong>.</p>
+            <div class="controls" style="margin-bottom:15px;">
+                <span class="badge badge-success" id="pay-total-badge">--</span>
+                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/payments-csv">Export all (CSV)</a>
+                <a class="btn btn-secondary" href="{{ADMIN_PATH}}/api/download/payments-csv?only_paid=true">Export paid only (CSV)</a>
+                <button class="btn btn-secondary" id="refresh-payments-btn" type="button">Refresh</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Item</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Ref</th>
+                            <th>Card</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>Add City</h3>
             <form id="add-city-form">
                 <div class="form-grid">
@@ -343,6 +370,49 @@
             });
         }
 
+        const PAY_BADGE = {
+            paid: 'badge-success',
+            pending: 'badge-error',
+            failed: 'badge-error'
+        };
+
+        async function loadPayments() {
+            try {
+                const data = await adminRequest('/api/payments');
+                const s = data.stats || {};
+                document.getElementById('pay-total-badge').textContent =
+                    `${fmt(s.paid_count)} paid | ${(s.total_toman || 0).toLocaleString('en-US')} Toman total`;
+
+                const tbody = document.getElementById('payments-tbody');
+                tbody.innerHTML = '';
+                if (!data.payments.length) {
+                    tbody.innerHTML = '<tr><td colspan="7">No payments yet.</td></tr>';
+                    return;
+                }
+                data.payments.forEach(p => {
+                    const when = p.paid_at || p.created_at || '';
+                    const cls = PAY_BADGE[p.status] || 'badge-error';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${String(when).slice(0, 19).replace('T', ' ')}</td>
+                        <td>${(p.first_name || '') + ' ' + (p.last_name || '')}</td>
+                        <td>${fmt(p.tier_name)}</td>
+                        <td>${(p.amount_toman || 0).toLocaleString('en-US')} Toman</td>
+                        <td><span class="badge ${cls}">${fmt(p.status)}</span></td>
+                        <td>${fmt(p.ref_number)}</td>
+                        <td>${fmt(p.card_number)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                if (error.message !== 'Not authenticated') {
+                    showMessage(error.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('refresh-payments-btn').addEventListener('click', loadPayments);
+
         async function loadOverview() {
             try {
                 const overview = await adminRequest('/api/overview');
@@ -567,6 +637,7 @@
         document.getElementById('refresh-btn').addEventListener('click', () => {
             loadOverview();
             loadContent();
+            loadPayments();
         });
 
         document.getElementById('logout-link').addEventListener('click', async function (e) {
@@ -577,6 +648,7 @@
 
         loadOverview();
         loadContent();
+        loadPayments();
     </script>
 </body>
 </html>

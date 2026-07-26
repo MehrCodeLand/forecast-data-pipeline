@@ -367,6 +367,81 @@ html[data-theme="dark"] .theme-knob { left: calc(100% - 27px); }
     font-size: 1rem;
 }
 
+.donate-continue:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Name fields inside the donate modal */
+.donate-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.donate-fields label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    margin-bottom: 5px;
+}
+
+.donate-fields input {
+    width: 100%;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.donate-fields input:focus {
+    outline: none;
+    border-color: var(--accent-purple);
+}
+
+.donate-error {
+    color: var(--error);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin-bottom: 8px;
+}
+
+/* Payment result page */
+.payment-result {
+    max-width: 520px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+.payment-result h2 {
+    margin-bottom: 12px;
+}
+
+.payment-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #ffffff;
+    background: var(--accent-purple);
+}
+
+.payment-icon.payment-success { background: var(--success); }
+.payment-icon.payment-pending { background: var(--warning); }
+.payment-icon.payment-failed { background: var(--error); }
+
+.payment-result .metric-detail {
+    text-align: start;
+    margin-top: 16px;
+}
+
 /* Coming-soon toast */
 .app-toast {
     position: fixed;

@@ -7,6 +7,31 @@
 
 Both sources are normalized to the same stored fields (temperature, windspeed in km/h, winddirection, …), so old records and all analytics keep working; the OpenWeather source simply adds the air-quality and extra weather fields.
 
+### Payments (Zibal)
+
+The "Buy me a coffee" button runs a real payment through [Zibal](https://zibal.ir).
+Flow: the visitor enters their **first and last name** and picks a tier →
+`POST /payment/request` registers the order with Zibal (amounts are taken from
+the **server-side** tier table, never from the browser) → the visitor is sent to
+`gateway.zibal.ir/start/{trackId}` → Zibal returns them to
+`/api/payment/callback`, which **verifies** the payment with Zibal before
+marking it paid → they land on `payment.html` with the result.
+
+Successful payments are stored in `data/payments.json` and listed in the admin
+panel (with CSV export, all or paid-only). A payment left `pending` because the
+verify call could not run can be re-checked from the admin API
+(`POST {admin}/api/payments/{trackId}/recheck`).
+
+Configure in `.env`:
+
+```bash
+ZIBAL_MERCHANT=your_merchant_key   # "zibal" = Zibal's sandbox merchant
+SITE_BASE_URL=https://havachetor.ir  # must be the public address of the site
+```
+
+`SITE_BASE_URL` matters: Zibal redirects back to `{SITE_BASE_URL}/api/payment/callback`,
+and it must be reachable over **https** from the internet.
+
 ### Enabling OpenWeather (air pollution)
 
 Copy `.env.example` to `.env` and set your key:
