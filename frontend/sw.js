@@ -6,7 +6,7 @@
 //   - fonts / icons / manifest -> cache-first (they rarely change).
 //   - API (cross-origin) -> network-first with cached fallback.
 
-const CACHE_NAME = 'weather-watch-v16';
+const CACHE_NAME = 'weather-watch-v17';
 
 const APP_SHELL = [
     './',
@@ -84,11 +84,20 @@ function networkFirst(request) {
         }));
 }
 
+// Hosts the service worker must not touch: analytics and the payment
+// gateway must always go straight to the network, never be cached or
+// served from cache.
+const BYPASS_HOSTS = ['clarity.ms', 'zibal.ir'];
+
 self.addEventListener('fetch', event => {
     const request = event.request;
     if (request.method !== 'GET') return;
 
     const url = new URL(request.url);
+    if (BYPASS_HOSTS.some(h => url.hostname === h || url.hostname.endsWith('.' + h))) {
+        return;  // let the browser handle it directly
+    }
+
     const isSameOrigin = url.origin === self.location.origin;
 
     if (isSameOrigin && /\.(woff2|png|jpg|svg|webmanifest|ico)$/.test(url.pathname)) {
