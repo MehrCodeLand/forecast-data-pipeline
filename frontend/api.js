@@ -192,13 +192,17 @@ function openDonateModal() {
             <p class="modal-pick">${t('donate_pick')}</p>
             <div class="coffee-tiers">${tiers}</div>
             <div class="donate-fields">
+                <!-- data-clarity-mask keeps the supporter's real name out of
+                     Clarity session recordings. -->
                 <div class="form-field">
                     <label for="donate-first">${t('first_name')}</label>
-                    <input type="text" id="donate-first" maxlength="60" autocomplete="given-name">
+                    <input type="text" id="donate-first" maxlength="60" autocomplete="given-name"
+                           data-clarity-mask="true">
                 </div>
                 <div class="form-field">
                     <label for="donate-last">${t('last_name')}</label>
-                    <input type="text" id="donate-last" maxlength="60" autocomplete="family-name">
+                    <input type="text" id="donate-last" maxlength="60" autocomplete="family-name"
+                           data-clarity-mask="true">
                 </div>
             </div>
             <p class="donate-error" id="donate-error"></p>
