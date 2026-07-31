@@ -25,8 +25,12 @@ LANG_FIELDS = [
 # Shared (not per-language) string fields.
 SHARED_FIELDS = ["donate_url", "icon_data_url"]
 
-# Old default English site names that should be upgraded to the current one.
-OLD_SITE_NAMES = {"Weather Watch"}
+# Old default site names, per language, that should be upgraded to the
+# current default. A name the admin genuinely customised is left alone.
+OLD_SITE_NAMES = {
+    "en": {"Weather Watch"},
+    "fa": {"هواچطور"},          # renamed to "هوا چطور" (two words)
+}
 
 DEFAULT_CONTENT = {
     "donate_url": "https://www.buymeacoffee.com",
@@ -69,7 +73,7 @@ DEFAULT_CONTENT = {
         "footer_text": "Weather Analysis System",
     },
     "fa": {
-        "site_name": "هواچطور",
+        "site_name": "هوا چطور",
         "tagline": "جمع‌آوری و تحلیل داده‌های هواشناسی، شهر به شهر",
         "home_intro": (
             "ما به‌طور پیوسته وضعیت آب‌وهوای شهرهای مختلف جهان را جمع‌آوری می‌کنیم "
@@ -142,12 +146,12 @@ class ContentStore:
         self._migrate()
 
     def _migrate(self) -> None:
-        # One-off rename: sites created before the rebrand stored the old
-        # default English name. Treat that as "not customized" and use the
-        # current default so the English site shows HavaChetor, not the old
-        # placeholder.
-        if self._content["en"].get("site_name") in OLD_SITE_NAMES:
-            self._content["en"]["site_name"] = DEFAULT_CONTENT["en"]["site_name"]
+        # One-off renames: a stored name that is just an older default is
+        # treated as "not customised" and upgraded to the current default,
+        # so already-deployed sites pick the new brand up automatically.
+        for lang, old_names in OLD_SITE_NAMES.items():
+            if self._content[lang].get("site_name") in old_names:
+                self._content[lang]["site_name"] = DEFAULT_CONTENT[lang]["site_name"]
 
     def get(self) -> Dict:
         return json.loads(json.dumps(self._content))
