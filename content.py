@@ -25,11 +25,17 @@ LANG_FIELDS = [
 # Shared (not per-language) string fields.
 SHARED_FIELDS = ["donate_url", "icon_data_url"]
 
-# Old default site names, per language, that should be upgraded to the
-# current default. A name the admin genuinely customised is left alone.
+# Superseded site names, per language, that should be upgraded to the
+# current default. This covers earlier defaults and known misspellings
+# (e.g. "هاوا" with an extra alef) that were saved through the admin panel.
+# A name the admin genuinely customised is left alone.
 OLD_SITE_NAMES = {
     "en": {"Weather Watch"},
-    "fa": {"هواچطور"},          # renamed to "هوا چطور" (two words)
+    "fa": {
+        "هواچطور",      # earlier default, single word
+        "هاوا چطور",    # misspelling: extra alef
+        "هاواچطور",     # same misspelling, single word
+    },
 }
 
 DEFAULT_CONTENT = {
