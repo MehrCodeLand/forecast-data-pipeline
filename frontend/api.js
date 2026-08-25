@@ -155,11 +155,13 @@ function showToast(message) {
 // via Site Content -> donate link). Empty means "coming soon".
 let SITE_DONATE_URL = '';
 
-// Coffee tiers. Amounts in Toman; names come from i18n so they localize.
-const COFFEE_TIERS = [
-    { id: 'espresso', nameKey: 'coffee_espresso', toman: 50000 },
-    { id: 'americano', nameKey: 'coffee_americano', toman: 75000 },
-    { id: 'coldbrew', nameKey: 'coffee_coldbrew', toman: 100000 }
+// Fallback coffee tiers, used only if the API cannot be reached. The real
+// tiers and prices are managed by the admin and come from /payment/tiers -
+// the browser never decides an amount, it only sends back a tier id.
+const FALLBACK_COFFEE_TIERS = [
+    { id: 'espresso', name_en: 'Espresso', name_fa: 'اسپرسو', toman: 50000 },
+    { id: 'americano', name_en: 'Americano', name_fa: 'آمریکانو', toman: 75000 },
+    { id: 'coldbrew', name_en: 'Cold Brew', name_fa: 'کلد برو', toman: 100000 }
 ];
 
 function formatToman(amount) {
@@ -167,19 +169,47 @@ function formatToman(amount) {
     return `${amount.toLocaleString(locale)} ${t('toman')}`;
 }
 
-function openDonateModal() {
+function tierName(tier) {
+    const name = CURRENT_LANG === 'fa' ? tier.name_fa : tier.name_en;
+    return name || tier.name_en || tier.name_fa || tier.id;
+}
+
+async function fetchCoffeeTiers() {
+    try {
+        const data = await apiRequest('/payment/tiers');
+        if (data && Array.isArray(data.tiers) && data.tiers.length) {
+            return data.tiers;
+        }
+    } catch (error) {
+        console.error('Could not load coffee tiers:', error);
+    }
+    return FALLBACK_COFFEE_TIERS;
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, ch => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+}
+
+async function openDonateModal() {
     let overlay = document.getElementById('donate-overlay');
     if (overlay) { overlay.classList.add('show'); return; }
+
+    // Prices are admin-managed, so they are fetched when the modal is first
+    // opened rather than baked into the page. Reopening reuses the built
+    // modal (and whatever the visitor already typed) via the check above.
+    const coffeeTiers = await fetchCoffeeTiers();
 
     overlay = document.createElement('div');
     overlay.id = 'donate-overlay';
     overlay.className = 'modal-overlay';
 
-    const tiers = COFFEE_TIERS.map((tier, i) => `
-        <button type="button" class="coffee-tier${i === 0 ? ' selected' : ''}" data-id="${tier.id}">
+    const tiers = coffeeTiers.map((tier, i) => `
+        <button type="button" class="coffee-tier${i === 0 ? ' selected' : ''}" data-id="${escapeHtml(tier.id)}">
             <span class="coffee-cup">☕</span>
-            <span class="coffee-name">${t(tier.nameKey)}</span>
-            <span class="coffee-price">${formatToman(tier.toman)}</span>
+            <span class="coffee-name">${escapeHtml(tierName(tier))}</span>
+            <span class="coffee-price">${escapeHtml(formatToman(tier.toman))}</span>
         </button>
     `).join('');
 
@@ -212,7 +242,7 @@ function openDonateModal() {
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('show'));
 
-    let selected = COFFEE_TIERS[0].id;
+    let selected = coffeeTiers[0].id;
     overlay.querySelectorAll('.coffee-tier').forEach(btn => {
         btn.addEventListener('click', () => {
             selected = btn.dataset.id;

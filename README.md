@@ -22,6 +22,15 @@ panel (with CSV export, all or paid-only). A payment left `pending` because the
 verify call could not run can be re-checked from the admin API
 (`POST {admin}/api/payments/{trackId}/recheck`).
 
+**Tiers and prices are managed from the admin panel** ("Buy Me a Coffee — Tiers
+& Prices"): rename a tier in either language, change its price, turn one off, or
+add a new one. The list is stored in `data/coffee_tiers.json` and the defaults
+(Espresso / Americano / Cold Brew) are used until it is edited. Because the
+charged amount is always read from that list, a new price applies to the next
+payment immediately — and payments already recorded keep the price and name
+they were made at. A tier that is turned off disappears from the donate window
+and can no longer be purchased.
+
 Configure in `.env`:
 
 ```bash
@@ -64,6 +73,7 @@ Served by nginx (`frontend/`):
 - **Cities** (`cities.html`) — a **live world map** (static Natural Earth SVG, no external tiles) with every tracked city as a dot — hover for latest conditions, click to open the dashboard — plus the city cards
 - **City dashboard** (`city.html?city=<id>`) — summary, trends charts, records, temperature/wind analytics, calm periods and recent raw data
 - **Compare** (`compare.html`) — pick 2-4 cities and see their metrics side by side plus overlaid temperature/wind charts
+- **News** (`news.html`) — announcements written in the admin panel (bilingual, newest first). Until the first post is published the page shows a friendly empty state, so it is safe to ship before there is anything to say
 - **Info** (`info.html`) — about the project, mission, data description, developers and contact (all admin-editable)
 
 The site supports **light and dark themes**: the default follows the visitor's system preference and a navbar toggle overrides it (persisted per device).
@@ -81,6 +91,20 @@ Each snapshot stores the classic fields — temperature, wind speed, wind direct
 - Each city dashboard shows **time-series charts** (temperature and wind over the selected window), drawn as dependency-free inline SVG that reads left-to-right even on the RTL Farsi site.
 - Each city has an all-time **Records & Milestones** section: hottest, coldest and windiest readings, longest calm streak, and (once such data exists) wettest and most-humid readings — computed over the city's entire collected history.
 
+## Shareable snapshot cards
+
+Every section of a city dashboard carries a small **share button** next to its
+title. It renders the values currently on screen into a branded portrait image
+(1080×1350) that the visitor can download, or hand straight to their phone's
+share sheet where the browser supports it (`navigator.share` with files).
+
+The card is drawn on a `<canvas>` in `frontend/share.js` — no external library
+and nothing leaves the browser. It follows the page language: in Farsi the
+layout mirrors to RTL and the bundled Vazirmatn font is loaded before drawing so
+Persian text is shaped correctly (units such as `°C` are bidi-isolated so they
+do not reverse). Each section has its own accent colour, and the card carries
+the site name, city, the reading's timestamp and the site's domain.
+
 ## Public API
 
 - `GET /cities` — tracked cities with latest snapshot
@@ -91,6 +115,8 @@ Each snapshot stores the classic fields — temperature, wind speed, wind direct
 - `GET /cities/{id}/temperature/average|range|rate-of-change|delta`
 - `GET /cities/{id}/wind/average-speed|peak-speed|dominant-direction|direction-variability|calm-periods`
 - `GET /content` — admin-managed site content
+- `GET /news?limit=` — published news posts, newest first (drafts are never exposed)
+- `GET /payment/tiers` — the coffee tiers currently offered, with their prices
 - `GET /health`, `GET /scheduler/status`
 
 ## Admin panel
@@ -112,6 +138,8 @@ From the panel an admin can:
 
 - **Manage cities**: add any city in the world (name, country, coordinates), enable/disable, delete, or collect a snapshot immediately (per city or all at once)
 - **Manage site content**: every text block on the public main page and info page (site name, tagline, intro, about, mission, data description, contact, footer), separately for Farsi and English, plus the donate (Buy me a coffee) URL
+- **Manage news posts**: write, edit and delete the bilingual posts shown on the public News page. A post can be saved unpublished (draft) and stays invisible to visitors until it is published; a language left empty falls back to the other one
+- **Manage coffee tiers and prices**: rename tiers, change the amounts charged, turn a tier off or add a new one (see *Payments* above)
 - Change the global collection interval; applies immediately and persists to `data/app_settings.json`
 - View per-city full reports in the browser (HTML) or download them as PDF
 - Download each city's dataset as JSON or CSV
@@ -161,6 +189,8 @@ uvicorn apis:app --port 8000
 - `scheduler.py` — periodic in-process collection for all enabled cities
 - `cities.py` — city registry (JSON-backed)
 - `content.py` — admin-editable site content (JSON-backed)
+- `news.py` — bilingual news posts for the public News page (JSON-backed)
+- `payments.py` — Zibal gateway client, the admin-managed coffee tiers, and the record of payments
 - `fetch_weather.py` — Open-Meteo client + one-shot collection
 - `analyse.py` — analytics over the most recent records
 - `data_json_manager.py` — JSON file storage with ids/timestamps

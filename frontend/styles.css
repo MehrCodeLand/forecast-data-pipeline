@@ -1242,3 +1242,183 @@ footer {
         overflow-wrap: anywhere;
     }
 }
+/* ----- Section heading with a share button beside it ----- */
+.section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.section-head .section-title {
+    margin-bottom: 0;
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.share-btn:hover,
+.share-btn:focus-visible {
+    color: var(--accent-purple);
+    border-color: var(--accent-purple);
+    background-color: var(--bg-secondary);
+}
+
+.share-btn svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+/* ----- Share preview modal ----- */
+.share-modal {
+    max-width: 460px;
+    text-align: center;
+}
+
+.share-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    margin-bottom: 14px;
+}
+
+.share-image {
+    display: block;
+    max-width: 100%;
+    max-height: 58vh;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px var(--shadow);
+}
+
+.share-status {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.share-hint {
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.share-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.share-actions .btn {
+    flex: 1 1 auto;
+    text-decoration: none;
+    text-align: center;
+}
+
+/* ----- News page ----- */
+.news-list {
+    display: grid;
+    gap: 18px;
+}
+
+.news-list > * {
+    min-width: 0;
+}
+
+.news-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.news-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.news-tag {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--accent-purple);
+    border-radius: 999px;
+    padding: 2px 12px;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+}
+
+.news-heading {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+}
+
+.news-summary {
+    color: var(--text-secondary);
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+.news-body {
+    color: var(--text-primary);
+    line-height: 1.9;
+    margin-top: 12px;
+    /* Keep the line breaks the author typed in the admin panel. */
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.news-toggle {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    padding: 7px 14px;
+}
+
+.news-empty {
+    text-align: center;
+    padding: 44px 20px;
+}
+
+.news-empty-icon {
+    font-size: 2.4rem;
+    margin-bottom: 10px;
+}
+
+.news-empty .page-lead {
+    max-width: 460px;
+    margin: 10px auto 0;
+}
+
+@media (max-width: 768px) {
+    .share-modal {
+        max-width: 100%;
+    }
+
+    .share-image {
+        max-height: 50vh;
+    }
+
+    .share-actions .btn {
+        flex: 1 1 100%;
+    }
+}

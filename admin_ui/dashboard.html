@@ -111,6 +111,96 @@
         </div>
 
         <div class="card">
+            <h3>Buy Me a Coffee - Tiers &amp; Prices</h3>
+            <p>What visitors are offered in the donate window. The amount charged is always taken from here, so a new price applies to the next payment; payments already received keep the price they were made at. Turning a tier off hides it and stops it being purchasable.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>English name</th>
+                            <th>Farsi name</th>
+                            <th>Price (Toman)</th>
+                            <th>Offered</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tiers-tbody"></tbody>
+                </table>
+            </div>
+            <div class="controls" style="margin-top:15px;">
+                <button class="btn btn-secondary" id="add-tier-btn" type="button">Add tier</button>
+                <button class="btn" id="save-tiers-btn" type="button">Save prices</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>News Posts</h3>
+            <p>Posts shown on the public News page, newest first. A post that is not published stays invisible to visitors, so you can prepare it first. Each post is bilingual; a language you leave empty falls back to the other one.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Title (Farsi)</th>
+                            <th>Title (English)</th>
+                            <th>Tag</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="news-tbody"></tbody>
+                </table>
+            </div>
+
+            <form id="news-form" style="margin-top:20px;">
+                <h4 id="news-form-title" style="margin-bottom:12px;">New post</h4>
+                <input type="hidden" id="news-id">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="news-tag">Tag (optional, e.g. Update)</label>
+                        <input type="text" id="news-tag" maxlength="40">
+                    </div>
+                    <div class="form-field">
+                        <label for="news-published">Visibility</label>
+                        <label style="color:var(--text-primary);font-size:0.95rem;">
+                            <input type="checkbox" id="news-published" checked style="width:auto;margin-inline-end:8px;">
+                            Published
+                        </label>
+                    </div>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-fa-title">Title (Farsi)</label>
+                    <input type="text" id="news-fa-title" maxlength="160" dir="rtl">
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-fa-summary">Summary (Farsi)</label>
+                    <textarea id="news-fa-summary" rows="2" maxlength="400" dir="rtl"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-fa-body">Body (Farsi)</label>
+                    <textarea id="news-fa-body" rows="5" maxlength="8000" dir="rtl"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-en-title">Title (English)</label>
+                    <input type="text" id="news-en-title" maxlength="160">
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-en-summary">Summary (English)</label>
+                    <textarea id="news-en-summary" rows="2" maxlength="400"></textarea>
+                </div>
+                <div class="form-field form-field-wide">
+                    <label for="news-en-body">Body (English)</label>
+                    <textarea id="news-en-body" rows="5" maxlength="8000"></textarea>
+                </div>
+                <div class="controls">
+                    <button type="submit" class="btn" id="save-news-btn">Save post</button>
+                    <button type="button" class="btn btn-secondary" id="reset-news-btn">Clear form</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
             <h3>Payments</h3>
             <p>Coffee support payments received through the Zibal gateway. Only payments confirmed by the gateway are marked <strong>paid</strong>.</p>
             <div class="controls" style="margin-bottom:15px;">
@@ -376,6 +466,231 @@
             failed: 'badge-error'
         };
 
+        // ----- coffee tiers -----
+
+        function tierRow(tier) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="tier-id" maxlength="30" placeholder="espresso"></td>
+                <td><input type="text" class="tier-name-en" maxlength="60"></td>
+                <td><input type="text" class="tier-name-fa" maxlength="60" dir="rtl"></td>
+                <td><input type="number" class="tier-toman" min="100" step="1000"></td>
+                <td><input type="checkbox" class="tier-enabled" style="width:auto;"></td>
+                <td class="actions-cell"></td>
+            `;
+            tr.querySelector('.tier-id').value = tier.id || '';
+            tr.querySelector('.tier-name-en').value = tier.name_en || '';
+            tr.querySelector('.tier-name-fa').value = tier.name_fa || '';
+            tr.querySelector('.tier-toman').value = tier.toman != null ? tier.toman : '';
+            tr.querySelector('.tier-enabled').checked = tier.enabled !== false;
+
+            const remove = document.createElement('button');
+            remove.className = 'btn btn-small btn-secondary';
+            remove.type = 'button';
+            remove.textContent = 'Remove';
+            // Removing only drops the row; nothing changes until Save is pressed.
+            remove.onclick = () => tr.remove();
+            tr.querySelector('.actions-cell').appendChild(remove);
+
+            return tr;
+        }
+
+        async function loadCoffeeTiers() {
+            try {
+                const data = await adminRequest('/api/coffee-tiers');
+                const tbody = document.getElementById('tiers-tbody');
+                tbody.innerHTML = '';
+                (data.tiers || []).forEach(tier => tbody.appendChild(tierRow(tier)));
+            } catch (error) {
+                if (error.message !== 'Not authenticated') {
+                    showMessage(error.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('add-tier-btn').addEventListener('click', () => {
+            document.getElementById('tiers-tbody')
+                .appendChild(tierRow({ enabled: true }));
+        });
+
+        document.getElementById('save-tiers-btn').addEventListener('click', async function () {
+            const rows = [...document.querySelectorAll('#tiers-tbody tr')];
+            const tiers = rows.map(tr => ({
+                id: tr.querySelector('.tier-id').value.trim().toLowerCase(),
+                name_en: tr.querySelector('.tier-name-en').value.trim(),
+                name_fa: tr.querySelector('.tier-name-fa').value.trim(),
+                toman: parseInt(tr.querySelector('.tier-toman').value, 10),
+                enabled: tr.querySelector('.tier-enabled').checked
+            }));
+
+            if (!tiers.length) {
+                showMessage('Keep at least one tier.', 'error');
+                return;
+            }
+            if (tiers.some(t => !t.id || !t.name_en || !t.name_fa || !Number.isFinite(t.toman))) {
+                showMessage('Every tier needs an id, both names and a price.', 'error');
+                return;
+            }
+
+            this.disabled = true;
+            try {
+                await adminRequest('/api/coffee-tiers', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tiers })
+                });
+                showMessage('Coffee tiers saved. Visitors see the new prices immediately.', 'success');
+                await loadCoffeeTiers();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                this.disabled = false;
+            }
+        });
+
+        // ----- news posts -----
+
+        function newsFormValues() {
+            return {
+                tag: document.getElementById('news-tag').value.trim(),
+                published: document.getElementById('news-published').checked,
+                fa: {
+                    title: document.getElementById('news-fa-title').value.trim(),
+                    summary: document.getElementById('news-fa-summary').value.trim(),
+                    body: document.getElementById('news-fa-body').value.trim()
+                },
+                en: {
+                    title: document.getElementById('news-en-title').value.trim(),
+                    summary: document.getElementById('news-en-summary').value.trim(),
+                    body: document.getElementById('news-en-body').value.trim()
+                }
+            };
+        }
+
+        function resetNewsForm() {
+            document.getElementById('news-id').value = '';
+            document.getElementById('news-tag').value = '';
+            document.getElementById('news-published').checked = true;
+            ['fa', 'en'].forEach(lang => {
+                ['title', 'summary', 'body'].forEach(field => {
+                    document.getElementById(`news-${lang}-${field}`).value = '';
+                });
+            });
+            document.getElementById('news-form-title').textContent = 'New post';
+            document.getElementById('save-news-btn').textContent = 'Save post';
+        }
+
+        function editNewsPost(post) {
+            document.getElementById('news-id').value = post.id;
+            document.getElementById('news-tag').value = post.tag || '';
+            document.getElementById('news-published').checked = post.published !== false;
+            ['fa', 'en'].forEach(lang => {
+                ['title', 'summary', 'body'].forEach(field => {
+                    document.getElementById(`news-${lang}-${field}`).value =
+                        (post[lang] || {})[field] || '';
+                });
+            });
+            document.getElementById('news-form-title').textContent = 'Editing post';
+            document.getElementById('save-news-btn').textContent = 'Update post';
+            document.getElementById('news-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function deleteNewsPost(post, btn) {
+            const title = (post.fa || {}).title || (post.en || {}).title || post.id;
+            if (!confirm(`Delete the post "${title}"? This cannot be undone.`)) return;
+            btn.disabled = true;
+            try {
+                await adminRequest(`/api/news/${post.id}`, { method: 'DELETE' });
+                showMessage('Post deleted.', 'success');
+                // Editing the post that was just deleted would 404 on save.
+                if (document.getElementById('news-id').value === post.id) resetNewsForm();
+                await loadNews();
+            } catch (error) {
+                showMessage(error.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function newsRow(post) {
+            const tr = document.createElement('tr');
+            const when = String(post.published_at || '').slice(0, 10);
+            const status = post.published
+                ? '<span class="badge badge-success">Published</span>'
+                : '<span class="badge badge-error">Draft</span>';
+            tr.innerHTML = `
+                <td>${when}</td>
+                <td dir="rtl">${fmt((post.fa || {}).title)}</td>
+                <td>${fmt((post.en || {}).title)}</td>
+                <td>${fmt(post.tag)}</td>
+                <td>${status}</td>
+                <td class="actions-cell"></td>
+            `;
+
+            const actions = tr.querySelector('.actions-cell');
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-small';
+            editBtn.type = 'button';
+            editBtn.textContent = 'Edit';
+            editBtn.onclick = () => editNewsPost(post);
+            actions.appendChild(editBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-small btn-secondary';
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = () => deleteNewsPost(post, deleteBtn);
+            actions.appendChild(deleteBtn);
+
+            return tr;
+        }
+
+        async function loadNews() {
+            try {
+                const data = await adminRequest('/api/news');
+                const tbody = document.getElementById('news-tbody');
+                tbody.innerHTML = '';
+                if (!data.items.length) {
+                    tbody.innerHTML = '<tr><td colspan="6">No posts yet. Add the first one below.</td></tr>';
+                    return;
+                }
+                data.items.forEach(post => tbody.appendChild(newsRow(post)));
+            } catch (error) {
+                if (error.message !== 'Not authenticated') {
+                    showMessage(error.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('reset-news-btn').addEventListener('click', resetNewsForm);
+
+        document.getElementById('news-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const values = newsFormValues();
+            if (!values.fa.title && !values.en.title) {
+                showMessage('Give the post a title in at least one language.', 'error');
+                return;
+            }
+
+            const postId = document.getElementById('news-id').value;
+            const btn = document.getElementById('save-news-btn');
+            btn.disabled = true;
+            try {
+                await adminRequest(postId ? `/api/news/${postId}` : '/api/news', {
+                    method: postId ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(values)
+                });
+                showMessage(postId ? 'Post updated.' : 'Post published.', 'success');
+                resetNewsForm();
+                await loadNews();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
         async function loadPayments() {
             try {
                 const data = await adminRequest('/api/payments');
@@ -638,6 +953,8 @@
             loadOverview();
             loadContent();
             loadPayments();
+            loadCoffeeTiers();
+            loadNews();
         });
 
         document.getElementById('logout-link').addEventListener('click', async function (e) {
@@ -649,6 +966,8 @@
         loadOverview();
         loadContent();
         loadPayments();
+        loadCoffeeTiers();
+        loadNews();
     </script>
 </body>
 </html>

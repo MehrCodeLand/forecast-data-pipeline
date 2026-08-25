@@ -1,11 +1,19 @@
 const CITY_ID = new URLSearchParams(window.location.search).get('city');
 
+// Values currently on screen, kept so the share buttons can turn any section
+// into an image without re-fetching anything.
+const SHARE_STATE = {
+    city: null, summary: null, air: null, advice: '',
+    latest: null, records: null, temperature: null, wind: null
+};
+
 function setText(id, value) {
     document.getElementById(id).textContent = value;
 }
 
 async function loadCityInfo() {
     const city = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}`);
+    SHARE_STATE.city = city;
     document.title = `${city.name} - Weather Watch`;
     setText('city-name', `${city.name}, ${city.country}`);
 
@@ -97,6 +105,7 @@ function shortTime(value) {
 
 async function loadSummary(period) {
     const result = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}/summary?period=${period}`);
+    SHARE_STATE.summary = result.summary;
     document.getElementById('summary-grid').innerHTML = summaryCards(result.summary);
     renderAirQualityCards(result.summary);
 }
@@ -154,6 +163,7 @@ function renderAirQualityCards(summary) {
         .filter(p => current[p.key] != null)
         .map(p => ({ label: p.label, value: current[p.key], max: p.max, unit: 'µg/m³' }));
     renderHBars(document.getElementById('pollutant-bars'), items);
+    SHARE_STATE.air = { aqi, rating, items };
 
     renderAirAdvice(aqi, items);
 }
@@ -176,6 +186,7 @@ function renderAirAdvice(aqi, pollutantItems) {
         text += ' ' + t('main_pollutant').replace('{p}', dominant.label);
     }
     el.textContent = text;
+    SHARE_STATE.advice = text;
     card.style.display = '';
 }
 
@@ -185,6 +196,7 @@ async function loadCharts(period) {
             `/cities/${encodeURIComponent(CITY_ID)}/data?limit=${Math.max(period, 2)}`);
         // API returns newest-first; charts read oldest -> newest.
         const chrono = [...data.data].reverse();
+        SHARE_STATE.latest = chrono[chrono.length - 1] || null;
 
         const series = field => chrono.map(r => ({
             label: shortTime(r.time),
@@ -269,6 +281,7 @@ async function loadRecords() {
         if (r.wettest) html += recordCard(t('wettest'), r.wettest, 'mm');
         if (r.most_humid) html += recordCard(t('most_humid'), r.most_humid, '%');
 
+        SHARE_STATE.records = r;
         document.getElementById('records-grid').innerHTML = html;
     } catch (error) {
         console.error('Failed to load records:', error);
@@ -284,6 +297,14 @@ async function loadTemperature(period) {
         apiRequest(`${base}/delta?hours=${period}`)
     ]);
     const [avg, range, rate, delta] = results.map(r => r.status === 'fulfilled' ? r.value : {});
+
+    SHARE_STATE.temperature = {
+        average: avg.average_temperature,
+        min: range.temperature_range?.min,
+        max: range.temperature_range?.max,
+        range: range.temperature_range?.range,
+        rate: rate.avg_rate_of_change
+    };
 
     setText('avg-temp', fmt(avg.average_temperature));
     setText('temp-min', fmt(range.temperature_range?.min));
@@ -302,6 +323,13 @@ async function loadWind(period) {
         apiRequest(`${base}/direction-variability?period=${Math.max(period, 2)}`)
     ]);
     const [avg, peak, direction, variability] = results.map(r => r.status === 'fulfilled' ? r.value : {});
+
+    SHARE_STATE.wind = {
+        average: avg.average_windspeed,
+        peak: peak.peak_windspeed,
+        direction: direction.dominant_direction,
+        variability: variability.direction_variability
+    };
 
     setText('avg-wind', fmt(avg.average_windspeed));
     setText('peak-wind', fmt(peak.peak_windspeed));
@@ -427,6 +455,123 @@ async function loadCityData() {
     }
 }
 
+// ----- shareable snapshot cards -----
+
+// Shared header for every card: who made it, which city, and when the
+// underlying reading was taken.
+function shareBase(sectionKey, theme) {
+    const city = SHARE_STATE.city || {};
+    const brand = document.getElementById('site-name');
+    const latest = city.latest || {};
+    const parts = [city.country, latest.condition_desc].filter(Boolean);
+
+    return {
+        theme,
+        siteName: (brand && brand.textContent.trim()) || 'HavaChetor',
+        section: t(sectionKey),
+        // ASCII base for the downloaded file name, independent of language.
+        fileBase: `${CITY_ID}-${sectionKey.replace(/_/g, '-')}`,
+        title: city.name || '',
+        subtitle: parts.join(' • '),
+        timestamp: `${t('last_update')} ${formatDateTime(city.last_record)}`,
+        domain: window.location.host
+    };
+}
+
+function stat(label, value, unit) {
+    return (value === null || value === undefined) ? null : { label, value: fmt(value), unit };
+}
+
+// Each factory reads SHARE_STATE at click time, so the card always matches
+// what the visitor is looking at (including a changed period).
+const SHARE_SECTIONS = {
+    summary: () => {
+        const s = SHARE_STATE.summary;
+        if (!s) return null;
+        const stats = [
+            stat(t('temperature'), s.avg_temperature, '°C'),
+            stat(t('wind_speed'), s.avg_windspeed, 'km/h'),
+            stat(t('humidity'), s.avg_humidity, '%'),
+            stat(t('aqi'), s.current?.aqi ?? s.avg_aqi, ''),
+            stat(t('calm_periods'), s.calm_periods?.calm_percentage, '%')
+        ].filter(Boolean);
+        return { ...shareBase('summary', 'default'), stats: stats.slice(0, 4) };
+    },
+
+    air_quality: () => {
+        const air = SHARE_STATE.air;
+        if (!air) return null;
+        const stats = [stat(t('aqi'), air.aqi, air.rating)].filter(Boolean);
+        (air.items || []).slice(0, 3).forEach(item => {
+            stats.push({ label: item.label, value: fmt(item.value), unit: 'µg/m³' });
+        });
+        return {
+            ...shareBase('air_quality', 'air'),
+            stats: stats.slice(0, 4),
+            note: SHARE_STATE.advice
+        };
+    },
+
+    trends: () => {
+        const latest = SHARE_STATE.latest;
+        const s = SHARE_STATE.summary;
+        if (!latest && !s) return null;
+        const stats = [
+            stat(t('temperature'), latest?.temperature, '°C'),
+            stat(t('wind_speed'), latest?.windspeed, 'km/h'),
+            stat(t('min_label').replace(':', ''), s?.temp_range?.min, '°C'),
+            stat(t('max_label').replace(':', ''), s?.temp_range?.max, '°C')
+        ].filter(Boolean);
+        return { ...shareBase('trends', 'temp'), stats };
+    },
+
+    records_milestones: () => {
+        const r = SHARE_STATE.records;
+        if (!r) return null;
+        const stats = [
+            stat(t('hottest'), r.hottest?.value, '°C'),
+            stat(t('coldest'), r.coldest?.value, '°C'),
+            stat(t('windiest'), r.windiest?.value, 'km/h'),
+            stat(t('longest_calm'), r.longest_calm_streak?.records, '')
+        ].filter(Boolean);
+        return { ...shareBase('records_milestones', 'records'), stats };
+    },
+
+    temperature: () => {
+        const temp = SHARE_STATE.temperature;
+        if (!temp) return null;
+        const stats = [
+            stat(t('average'), temp.average, '°C'),
+            stat(t('min_label').replace(':', ''), temp.min, '°C'),
+            stat(t('max_label').replace(':', ''), temp.max, '°C'),
+            stat(t('rate_of_change'), temp.rate, '°C/h')
+        ].filter(Boolean);
+        return { ...shareBase('temperature', 'temp'), stats };
+    },
+
+    wind: () => {
+        const wind = SHARE_STATE.wind;
+        if (!wind) return null;
+        const stats = [
+            stat(t('avg_speed'), wind.average, 'km/h'),
+            stat(t('peak_speed'), wind.peak, 'km/h'),
+            stat(t('dominant_direction'), wind.direction, getWindDirection(wind.direction)),
+            stat(t('direction_variability'), wind.variability, '°')
+        ].filter(Boolean);
+        return { ...shareBase('wind', 'wind'), stats };
+    }
+};
+
+// Adds the share button to every section that has something to show.
+function mountShareButtons() {
+    if (typeof attachShareButton !== 'function') return;
+    Object.entries(SHARE_SECTIONS).forEach(([key, factory]) => {
+        if (!factory()) return;  // nothing collected for this section yet
+        attachShareButton(
+            document.querySelector(`.section-head h2[data-i18n="${key}"]`), factory);
+    });
+}
+
 async function loadCityDashboard() {
     if (!CITY_ID) {
         window.location.href = 'cities.html';
@@ -461,6 +606,8 @@ async function loadCityDashboard() {
             loadCalmPeriods(),
             loadCityData()
         ]);
+
+        mountShareButtons();
     } catch (error) {
         showLoading(false);
         showError(t('error_city'));

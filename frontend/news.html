@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="enamad" content="603093" />
     <script>
         /* Apply saved theme and language before first paint to avoid a flash
            of the wrong colors or text direction. Mirrors i18n.js defaults. */
@@ -23,8 +22,8 @@
         })();
     </script>
     <meta name="theme-color" content="#0d1117">
-    <meta name="description" content="Weather data collection and analysis for cities around the world">
-    <title>HavaChetor</title>
+    <meta name="description" content="News and updates about the weather data project">
+    <title>News - HavaChetor</title>
     <!-- Microsoft Clarity analytics -->
     <script type="text/javascript">
         (function(c,l,a,r,i,t,y){
@@ -45,10 +44,10 @@
                 <h1 id="site-name">HavaChetor</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
+                <li><a href="index.html" data-i18n="nav_home">Home</a></li>
                 <li><a href="cities.html" data-i18n="nav_cities">Cities</a></li>
                 <li><a href="compare.html" data-i18n="nav_compare">Compare</a></li>
-                <li><a href="news.html" data-i18n="nav_news">News</a></li>
+                <li><a href="news.html" class="active" data-i18n="nav_news">News</a></li>
                 <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
             <div class="nav-actions">
@@ -64,47 +63,18 @@
     </nav>
 
     <div class="container main-content">
-        <section class="hero">
-            <h2 id="hero-tagline" data-i18n="default_tagline">Weather data collection and analysis, city by city</h2>
-            <p id="hero-intro" data-i18n="default_intro">We continuously collect current weather conditions for cities around the world and turn them into clear, comparable analytics.</p>
-            <div class="hero-actions">
-                <a href="cities.html" class="btn" data-i18n="explore_cities">Explore Cities</a>
-                <a href="info.html" class="btn btn-secondary" data-i18n="about_project">About the Project</a>
+        <div class="header">
+            <div>
+                <h2 data-i18n="news_title">News &amp; Updates</h2>
+                <p class="page-lead" data-i18n="news_lead">Announcements about the project: new features, new cities, and changes to how the data is collected.</p>
             </div>
-        </section>
+        </div>
 
+        <div id="loading" class="loading" data-i18n="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
 
         <section>
-            <div class="section-header">
-                <h2 data-i18n="cities_we_track">Cities We Track</h2>
-                <a href="cities.html" class="link-more" data-i18n="see_all">See all</a>
-            </div>
-            <div id="cities-preview" class="card-grid">
-                <div class="card"><p data-i18n="loading">Loading...</p></div>
-            </div>
-        </section>
-
-        <section>
-            <h2 class="section-title" data-i18n="what_you_find">What You Will Find Here</h2>
-            <div class="card-grid">
-                <div class="card">
-                    <h3 data-i18n="temp_analytics">Temperature Analytics</h3>
-                    <p data-i18n="temp_analytics_desc">Average temperature, minimum and maximum range, rate of change and hourly delta, computed over the most recent records of each city.</p>
-                </div>
-                <div class="card">
-                    <h3 data-i18n="wind_analytics">Wind Analytics</h3>
-                    <p data-i18n="wind_analytics_desc">Average and peak wind speed, dominant direction, direction variability and calm-period detection with a configurable threshold.</p>
-                </div>
-                <div class="card">
-                    <h3 data-i18n="raw_history">Raw History</h3>
-                    <p data-i18n="raw_history_desc">Every snapshot we collect is stored and browsable, so you can see exactly how conditions evolved over time.</p>
-                </div>
-            </div>
-            <div class="card">
-                <h3 data-i18n="how_it_works">How It Works</h3>
-                <p id="home-examples" data-i18n="default_examples">For every city we track average temperature, temperature range and rate of change, wind speed and direction, calm periods, and more.</p>
-            </div>
+            <div id="news-list" class="news-list"></div>
         </section>
     </div>
 
@@ -117,6 +87,6 @@
     <script src="config.js"></script>
     <script src="i18n.js"></script>
     <script src="api.js"></script>
-    <script src="home.js"></script>
+    <script src="news.js"></script>
 </body>
 </html>
