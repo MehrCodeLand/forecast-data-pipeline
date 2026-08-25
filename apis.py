@@ -14,6 +14,7 @@ from analyse import Analyse
 from cities import city_store
 from config import settings
 from content import content_store
+from news import news_store
 from scheduler import WeatherScheduler
 
 logger.add('logs/api.txt', rotation="1 week")
@@ -71,14 +72,18 @@ def _site_base(request: Request) -> str:
 
 @app.get("/payment/tiers")
 async def payment_tiers():
-    """Coffee tiers and prices. The server is the source of truth for amounts."""
+    """Coffee tiers and prices, as configured by the admin.
+
+    The server is the source of truth for amounts: the browser renders what
+    it gets here and only ever sends back a tier id.
+    """
     return {
         "enabled": settings.payments_enabled,
         "currency": "toman",
         "tiers": [
-            {"id": tid, "name_en": t["name_en"], "name_fa": t["name_fa"],
+            {"id": t["id"], "name_en": t["name_en"], "name_fa": t["name_fa"],
              "toman": t["toman"]}
-            for tid, t in payments.COFFEE_TIERS.items()
+            for t in payments.tier_store.enabled()
         ],
     }
 
@@ -160,6 +165,7 @@ async def root():
             "health": "/health",
             "scheduler": "/scheduler/status",
             "content": "/content",
+            "news": "/news",
             "cities": "/cities",
             "city": "/cities/{city_id}",
             "city_data": "/cities/{city_id}/data",
@@ -184,6 +190,13 @@ async def scheduler_status():
 @app.get("/content")
 async def site_content():
     return content_store.get()
+
+
+@app.get("/news")
+async def list_news(limit: Optional[int] = Query(None, ge=1, le=100)):
+    """Published news posts, newest first. Drafts are never exposed here."""
+    items = news_store.published()
+    return {"count": len(items), "items": items[:limit] if limit else items}
 
 
 @app.get("/cities")

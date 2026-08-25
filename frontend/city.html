@@ -46,6 +46,7 @@
                 <li><a href="index.html" data-i18n="nav_home">Home</a></li>
                 <li><a href="cities.html" class="active" data-i18n="nav_cities">Cities</a></li>
                 <li><a href="compare.html" data-i18n="nav_compare">Compare</a></li>
+                <li><a href="news.html" data-i18n="nav_news">News</a></li>
                 <li><a href="info.html" data-i18n="nav_info">Info</a></li>
             </ul>
             <div class="nav-actions">
@@ -77,12 +78,16 @@
         <div id="error" class="error" style="display: none;"></div>
 
         <section>
-            <h2 class="section-title" data-i18n="summary">Summary</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="summary">Summary</h2>
+            </div>
             <div id="summary-grid" class="card-grid"></div>
         </section>
 
         <section id="air-quality-section" style="display: none;">
-            <h2 class="section-title" data-i18n="air_quality">Air Quality</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="air_quality">Air Quality</h2>
+            </div>
             <div id="air-quality-grid" class="card-grid aqi-grid"></div>
             <div class="card" id="aqi-advice-card" style="display:none;">
                 <h3 data-i18n="health_advice">Health Advice</h3>
@@ -115,7 +120,9 @@
         </section>
 
         <section>
-            <h2 class="section-title" data-i18n="trends">Trends</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="trends">Trends</h2>
+            </div>
             <div class="card-grid chart-grid">
                 <div class="card">
                     <h3 data-i18n="temp_trend">Temperature over time</h3>
@@ -160,13 +167,17 @@
         </section>
 
         <section>
-            <h2 class="section-title" data-i18n="records_milestones">Records &amp; Milestones</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="records_milestones">Records &amp; Milestones</h2>
+            </div>
             <p class="page-lead" data-i18n="records_note">All-time highlights computed over this city's full collected history.</p>
             <div id="records-grid" class="card-grid"></div>
         </section>
 
         <section>
-            <h2 class="section-title" data-i18n="temperature">Temperature</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="temperature">Temperature</h2>
+            </div>
             <div class="card-grid">
                 <div class="card">
                     <h3 data-i18n="average">Average</h3>
@@ -195,7 +206,9 @@
         </section>
 
         <section>
-            <h2 class="section-title" data-i18n="wind">Wind</h2>
+            <div class="section-head">
+                <h2 class="section-title" data-i18n="wind">Wind</h2>
+            </div>
             <div class="card-grid">
                 <div class="card">
                     <h3 data-i18n="avg_speed">Average Speed</h3>
@@ -276,6 +289,7 @@
     <script src="i18n.js"></script>
     <script src="api.js"></script>
     <script src="chart.js"></script>
+    <script src="share.js"></script>
     <script src="city.js"></script>
 </body>
 </html>

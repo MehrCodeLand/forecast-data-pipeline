@@ -2,7 +2,7 @@
 
 import io
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -18,7 +18,8 @@ from cities import CityStore
 from config import settings
 import payments
 from content import content_store
-from payments import payment_store
+from news import news_store
+from payments import payment_store, tier_store
 from report import build_report_data, render_report_html, render_report_pdf
 from scheduler import WeatherScheduler
 
@@ -58,6 +59,33 @@ class ContentRequest(BaseModel):
     icon_data_url: Optional[str] = None
     en: Optional[Dict[str, str]] = None
     fa: Optional[Dict[str, str]] = None
+
+
+class CoffeeTier(BaseModel):
+    id: str = Field(min_length=1, max_length=30)
+    name_en: str = Field(min_length=1, max_length=60)
+    name_fa: str = Field(min_length=1, max_length=60)
+    toman: int = Field(ge=payments.MIN_TIER_TOMAN, le=payments.MAX_TIER_TOMAN)
+    enabled: bool = True
+
+
+class CoffeeTiersRequest(BaseModel):
+    """The complete tier list; it replaces whatever is stored."""
+    tiers: List[CoffeeTier] = Field(min_length=1, max_length=10)
+
+
+class NewsBlock(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=160)
+    summary: Optional[str] = Field(default=None, max_length=400)
+    body: Optional[str] = Field(default=None, max_length=8000)
+
+
+class NewsRequest(BaseModel):
+    tag: Optional[str] = Field(default=None, max_length=40)
+    published: Optional[bool] = None
+    published_at: Optional[str] = None
+    en: Optional[NewsBlock] = None
+    fa: Optional[NewsBlock] = None
 
 
 def _page(name: str) -> HTMLResponse:
@@ -224,6 +252,57 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
     async def update_content(body: ContentRequest):
         updated = content_store.update(body.model_dump(exclude_none=True))
         return {"updated": True, "content": updated}
+
+    # ----- news posts -----
+
+    @router.get("/api/news", dependencies=[Depends(require_admin)])
+    async def list_news():
+        """Every post, drafts included."""
+        return {"items": news_store.all()}
+
+    @router.post("/api/news", dependencies=[Depends(require_admin)])
+    async def create_news(body: NewsRequest):
+        try:
+            post = news_store.add(body.model_dump(exclude_none=True))
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return {"created": True, "post": post}
+
+    @router.put("/api/news/{post_id}", dependencies=[Depends(require_admin)])
+    async def update_news(post_id: str, body: NewsRequest):
+        try:
+            post = news_store.update(post_id, body.model_dump(exclude_none=True))
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        if post is None:
+            raise HTTPException(status_code=404, detail=f"Unknown post: {post_id}")
+        return {"updated": True, "post": post}
+
+    @router.delete("/api/news/{post_id}", dependencies=[Depends(require_admin)])
+    async def delete_news(post_id: str):
+        if not news_store.delete(post_id):
+            raise HTTPException(status_code=404, detail=f"Unknown post: {post_id}")
+        return {"deleted": True, "post_id": post_id}
+
+    # ----- coffee tiers ("buy me a coffee" prices) -----
+
+    @router.get("/api/coffee-tiers", dependencies=[Depends(require_admin)])
+    async def get_coffee_tiers():
+        return {
+            "tiers": tier_store.all(),
+            "min_toman": payments.MIN_TIER_TOMAN,
+            "max_toman": payments.MAX_TIER_TOMAN,
+        }
+
+    @router.put("/api/coffee-tiers", dependencies=[Depends(require_admin)])
+    async def update_coffee_tiers(body: CoffeeTiersRequest):
+        """Replace the whole tier list. Prices take effect immediately; they
+        never change what an already-recorded payment was charged."""
+        try:
+            tiers = tier_store.replace([t.model_dump() for t in body.tiers])
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return {"updated": True, "tiers": tiers}
 
     # ----- settings -----
 
