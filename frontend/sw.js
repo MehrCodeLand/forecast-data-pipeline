@@ -6,7 +6,7 @@
 //   - fonts / icons / manifest -> cache-first (they rarely change).
 //   - API (cross-origin) -> network-first with cached fallback.
 
-const CACHE_NAME = 'weather-watch-v20';
+const CACHE_NAME = 'weather-watch-v21';
 
 const APP_SHELL = [
     './',
@@ -23,6 +23,7 @@ const APP_SHELL = [
     './api.js',
     './chart.js',
     './share.js',
+    './country-filter.js',
     './map.js',
     './world-map.js',
     './compare.js',

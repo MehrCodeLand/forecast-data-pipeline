@@ -68,8 +68,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>City</th>
-                            <th>Country</th>
+                            <th>City (EN / FA)</th>
+                            <th>Country (EN / FA)</th>
                             <th>Coordinates</th>
                             <th>Records</th>
                             <th>Last success</th>
@@ -228,16 +228,26 @@
         </div>
 
         <div class="card">
-            <h3>Add City</h3>
+            <h3 id="city-form-title">Add City</h3>
+            <p>The English name and country are required — the English name becomes the city's id, used in links, file names and every export. The Farsi names are what visitors see on the Farsi site; leave them empty and the site falls back to English. <strong>Cities added before this existed have no Farsi names yet: use <em>Edit</em> in the table above to fill them in.</strong></p>
             <form id="add-city-form">
+                <input type="hidden" id="city-edit-id">
                 <div class="form-grid">
                     <div class="form-field">
-                        <label for="city-name">City name</label>
+                        <label for="city-name">City name (English)</label>
                         <input type="text" id="city-name" maxlength="80" required>
                     </div>
                     <div class="form-field">
-                        <label for="city-country">Country</label>
+                        <label for="city-name-fa">City name (Farsi)</label>
+                        <input type="text" id="city-name-fa" maxlength="80" dir="rtl" placeholder="تهران">
+                    </div>
+                    <div class="form-field">
+                        <label for="city-country">Country (English)</label>
                         <input type="text" id="city-country" maxlength="80" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="city-country-fa">Country (Farsi)</label>
+                        <input type="text" id="city-country-fa" maxlength="80" dir="rtl" placeholder="ایران">
                     </div>
                     <div class="form-field">
                         <label for="city-lat">Latitude</label>
@@ -248,7 +258,10 @@
                         <input type="number" id="city-lon" step="0.000001" min="-180" max="180" required>
                     </div>
                 </div>
-                <button type="submit" class="btn" id="add-city-btn">Add City</button>
+                <div class="controls">
+                    <button type="submit" class="btn" id="add-city-btn">Add City</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-city-edit-btn" style="display:none;">Cancel edit</button>
+                </div>
             </form>
         </div>
 
@@ -366,9 +379,17 @@
             const error = city.last_error
                 ? `<br><small>${city.last_error}</small>` : '';
 
+            // A missing Farsi name is called out, since the Farsi site falls
+            // back to English until someone fills it in.
+            const missing = '<small class="missing-fa">not set</small>';
+            const nameFa = city.name_fa
+                ? `<br><small dir="rtl">${city.name_fa}</small>` : `<br>${missing}`;
+            const countryFa = city.country_fa
+                ? `<br><small dir="rtl">${city.country_fa}</small>` : `<br>${missing}`;
+
             tr.innerHTML = `
-                <td>${city.name}</td>
-                <td>${city.country}</td>
+                <td>${city.name}${nameFa}</td>
+                <td>${city.country}${countryFa}</td>
                 <td>${city.latitude}, ${city.longitude}</td>
                 <td>${fmt(city.records)}</td>
                 <td>${fmt(city.last_success_at)}${error}</td>
@@ -377,6 +398,12 @@
             `;
 
             const actions = tr.querySelector('.actions-cell');
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-small';
+            editBtn.textContent = 'Edit';
+            editBtn.onclick = () => editCity(city);
+            actions.appendChild(editBtn);
 
             const collectBtn = document.createElement('button');
             collectBtn.className = 'btn btn-small';
@@ -846,6 +873,8 @@
             try {
                 await adminRequest(`/api/cities/${cityId}`, { method: 'DELETE' });
                 showMessage(`${cityName} deleted.`, 'success');
+                // Editing the city that was just deleted would 404 on save.
+                if (document.getElementById('city-edit-id').value === cityId) resetCityForm();
                 await loadOverview();
             } catch (error) {
                 showMessage(error.message, 'error');
@@ -853,29 +882,70 @@
             }
         }
 
+        // The same form adds a city and edits an existing one; the hidden id
+        // decides which. Editing is how cities created before the bilingual
+        // names existed get their Farsi text.
+        function resetCityForm() {
+            document.getElementById('add-city-form').reset();
+            document.getElementById('city-edit-id').value = '';
+            document.getElementById('city-form-title').textContent = 'Add City';
+            document.getElementById('add-city-btn').textContent = 'Add City';
+            document.getElementById('cancel-city-edit-btn').style.display = 'none';
+        }
+
+        function editCity(city) {
+            document.getElementById('city-edit-id').value = city.id;
+            document.getElementById('city-name').value = city.name || '';
+            document.getElementById('city-name-fa').value = city.name_fa || '';
+            document.getElementById('city-country').value = city.country || '';
+            document.getElementById('city-country-fa').value = city.country_fa || '';
+            document.getElementById('city-lat').value = city.latitude;
+            document.getElementById('city-lon').value = city.longitude;
+            document.getElementById('city-form-title').textContent = `Editing ${city.name}`;
+            document.getElementById('add-city-btn').textContent = 'Save changes';
+            document.getElementById('cancel-city-edit-btn').style.display = '';
+            document.getElementById('add-city-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('cancel-city-edit-btn').addEventListener('click', resetCityForm);
+
         document.getElementById('add-city-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const btn = document.getElementById('add-city-btn');
+            const cityId = document.getElementById('city-edit-id').value;
+            const payload = {
+                name: document.getElementById('city-name').value.trim(),
+                country: document.getElementById('city-country').value.trim(),
+                name_fa: document.getElementById('city-name-fa').value.trim(),
+                country_fa: document.getElementById('city-country-fa').value.trim(),
+                latitude: parseFloat(document.getElementById('city-lat').value),
+                longitude: parseFloat(document.getElementById('city-lon').value)
+            };
+
             btn.disabled = true;
             try {
-                const result = await adminRequest('/api/cities', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: document.getElementById('city-name').value,
-                        country: document.getElementById('city-country').value,
-                        latitude: parseFloat(document.getElementById('city-lat').value),
-                        longitude: parseFloat(document.getElementById('city-lon').value)
-                    })
-                });
-                if (result.collected) {
-                    showMessage('City added and first snapshot collected.', 'success');
+                if (cityId) {
+                    await adminRequest(`/api/cities/${cityId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showMessage('City updated.', 'success');
                 } else {
-                    showMessage('City added, but the first collection failed: ' +
-                        (result.error || 'unknown error') +
-                        '. The API server may be unable to reach open-meteo.com.', 'error');
+                    const result = await adminRequest('/api/cities', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (result.collected) {
+                        showMessage('City added and first snapshot collected.', 'success');
+                    } else {
+                        showMessage('City added, but the first collection failed: ' +
+                            (result.error || 'unknown error') +
+                            '. The API server may be unable to reach the weather API.', 'error');
+                    }
                 }
-                this.reset();
+                resetCityForm();
                 await loadOverview();
             } catch (error) {
                 showMessage(error.message, 'error');

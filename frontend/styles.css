@@ -159,26 +159,39 @@ html[dir="rtl"] .metric-value {
     flex-wrap: wrap;
 }
 
-/* Donate button (Buy me a coffee): small square with just the coffee emoji */
+/* Donate button (Buy me a coffee): a labelled accent pill, so it reads as
+   an invitation rather than an unexplained icon. */
 .donate-btn {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 36px;
+    gap: 7px;
     height: 36px;
-    padding: 0;
-    font-size: 1.1rem;
+    padding: 0 14px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
     line-height: 1;
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    color: #fff;
+    background-color: var(--accent-purple);
+    border: 1px solid var(--accent-purple);
+    border-radius: 999px;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(137, 87, 229, 0.35);
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 
 .donate-btn:hover {
-    background-color: var(--border-color);
-    border-color: var(--accent-purple);
+    background-color: var(--accent-purple-dark);
+    box-shadow: 0 4px 16px rgba(137, 87, 229, 0.45);
+}
+
+.donate-btn:active {
+    transform: translateY(1px);
+}
+
+.donate-btn-cup {
+    font-size: 1.05rem;
 }
 
 /* Theme toggle: a sliding switch with a sun and a moon. Kept LTR so the
@@ -316,49 +329,153 @@ html[data-theme="dark"] .theme-knob { left: calc(100% - 27px); }
     margin: 16px 0 10px;
 }
 
+/* Donate modal: wider than a plain dialog so three tiers fit side by side */
+.donate-modal {
+    max-width: 560px;
+    padding-top: 22px;
+}
+
+.donate-header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.donate-emoji {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    line-height: 1;
+    border-radius: 50%;
+    background: linear-gradient(140deg, var(--accent-purple), var(--accent-purple-dark));
+    box-shadow: 0 6px 20px rgba(137, 87, 229, 0.4);
+}
+
+.donate-header .modal-title {
+    margin-bottom: 8px;
+}
+
+.donate-sub {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* "Where the money goes", set apart so it is actually read */
+.donate-where {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.donate-where p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.75;
+}
+
+.donate-where-icon {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
 .coffee-tiers {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
 
+.coffee-tiers > * {
+    min-width: 0;
+}
+
+/* Each tier is a card: cup, name, price, and a tick when selected */
 .coffee-tier {
+    position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
+    gap: 6px;
+    padding: 16px 12px;
     background: var(--bg-tertiary);
     border: 2px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    text-align: start;
-    transition: border-color 0.15s, background 0.15s;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
 
 .coffee-tier:hover {
     border-color: var(--accent-purple);
+    transform: translateY(-2px);
 }
 
 .coffee-tier.selected {
     border-color: var(--accent-purple);
-    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--accent-purple) 12%, var(--bg-tertiary));
+}
+
+.coffee-check {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 10px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background-color: var(--accent-purple);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.15s, transform 0.15s;
+}
+
+.coffee-tier.selected .coffee-check {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .coffee-cup {
-    font-size: 1.4rem;
+    font-size: 1.7rem;
     line-height: 1;
 }
 
 .coffee-name {
     font-weight: 600;
     color: var(--text-primary);
-    flex: 1;
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
 }
 
 .coffee-price {
     color: var(--accent-purple);
     font-weight: 700;
-    white-space: nowrap;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.donate-secure {
+    margin-top: 12px;
+    margin-bottom: 0;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    text-align: center;
 }
 
 .donate-continue {
@@ -1421,4 +1538,68 @@ footer {
     .share-actions .btn {
         flex: 1 1 100%;
     }
+}
+
+/* ----- Country filter chips ----- */
+.country-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.country-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.country-chip:hover {
+    color: var(--text-primary);
+    border-color: var(--accent-purple);
+}
+
+.country-chip.selected {
+    background-color: var(--accent-purple);
+    border-color: var(--accent-purple);
+    color: #fff;
+    font-weight: 600;
+}
+
+.country-chip-label {
+    overflow-wrap: anywhere;
+}
+
+.country-chip-count {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    min-width: 20px;
+    padding: 1px 7px;
+    font-size: 0.76rem;
+    text-align: center;
+}
+
+.country-chip.selected .country-chip-count {
+    background-color: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+.cities-more {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-top: 12px;
+}
+
+.cities-more:empty {
+    display: none;
 }

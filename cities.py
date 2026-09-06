@@ -2,6 +2,11 @@
 
 Cities are stored in a JSON file (no database in this version) and managed
 through the admin panel. Each city gets its own data file.
+
+Names are bilingual: `name`/`country` hold the English text (they also drive
+the city's id and every export) and `name_fa`/`country_fa` hold the Farsi
+text. A city added before the Farsi fields existed simply has them empty; the
+site falls back to English until an admin fills them in from the panel.
 """
 
 import json
@@ -17,6 +22,9 @@ from config import settings
 from data_json_manager import JSONDataManager
 
 CITIES_FILE = os.getenv("CITIES_FILE", "data/cities.json")
+
+# Optional Farsi names, blank on cities created before they existed.
+TRANSLATED_FIELDS = ("name_fa", "country_fa")
 
 
 def _slugify(name: str) -> str:
@@ -39,9 +47,18 @@ class CityStore:
         except FileNotFoundError:
             self._cities = [self._default_city()]
             self._persist()
+            return
         except (json.JSONDecodeError, OSError) as e:
             logger.error(f"Invalid cities file {self.path}: {e}")
             self._cities = [self._default_city()]
+            return
+
+        # Cities stored before the bilingual fields existed get them as empty
+        # strings, in memory only: the file is rewritten on the next edit, and
+        # until then the site just falls back to the English name.
+        for city in self._cities:
+            for field in TRANSLATED_FIELDS:
+                city.setdefault(field, "")
 
     def _default_city(self) -> Dict:
         # Seed with Tehran, pointing at the pre-existing single-city data file
@@ -50,6 +67,8 @@ class CityStore:
             "id": "tehran",
             "name": "Tehran",
             "country": "Iran",
+            "name_fa": "تهران",
+            "country_fa": "ایران",
             "latitude": settings.latitude,
             "longitude": settings.longitude,
             "enabled": True,
@@ -60,7 +79,8 @@ class CityStore:
         try:
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
             with open(self.path, 'w') as f:
-                json.dump(self._cities, f, indent=2)
+                # ensure_ascii=False keeps the Farsi names readable in the file
+                json.dump(self._cities, f, indent=2, ensure_ascii=False)
         except OSError as e:
             logger.error(f"Could not persist cities to {self.path}: {e}")
 
@@ -83,8 +103,11 @@ class CityStore:
 
     # ----- mutations -----
 
-    def add(self, name: str, country: str, latitude: float, longitude: float) -> Dict:
+    def add(self, name: str, country: str, latitude: float, longitude: float,
+            name_fa: str = "", country_fa: str = "") -> Dict:
         with self._lock:
+            # The id comes from the English name so it stays ASCII and usable
+            # in URLs, file names and exports.
             base_slug = _slugify(name)
             slug = base_slug
             suffix = 2
@@ -96,6 +119,8 @@ class CityStore:
                 "id": slug,
                 "name": name.strip(),
                 "country": country.strip(),
+                "name_fa": (name_fa or "").strip(),
+                "country_fa": (country_fa or "").strip(),
                 "latitude": float(latitude),
                 "longitude": float(longitude),
                 "enabled": True,
@@ -107,7 +132,8 @@ class CityStore:
             return dict(city)
 
     def update(self, city_id: str, **fields) -> Optional[Dict]:
-        allowed = {"name", "country", "latitude", "longitude", "enabled"}
+        allowed = {"name", "country", "name_fa", "country_fa",
+                   "latitude", "longitude", "enabled"}
         with self._lock:
             for city in self._cities:
                 if city["id"] == city_id:

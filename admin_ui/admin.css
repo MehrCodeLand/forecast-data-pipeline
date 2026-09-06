@@ -396,3 +396,9 @@ tbody tr:hover {
         font-size: 1.4rem;
     }
 }
+
+/* Flags a city whose Farsi name has not been filled in yet */
+.missing-fa {
+    color: var(--warning);
+    font-style: italic;
+}
