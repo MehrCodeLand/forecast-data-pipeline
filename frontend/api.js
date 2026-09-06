@@ -53,6 +53,21 @@ function fmt(value) {
     return (value === null || value === undefined) ? '--' : value;
 }
 
+// City and country names are stored in English and (optionally) Farsi. Show
+// the current language and fall back to English, so a city an admin has not
+// translated yet is still readable rather than blank.
+function cityName(city) {
+    if (!city) return '';
+    const fa = (city.name_fa || '').trim();
+    return (CURRENT_LANG === 'fa' && fa) ? fa : (city.name || '');
+}
+
+function cityCountry(city) {
+    if (!city) return '';
+    const fa = (city.country_fa || '').trim();
+    return (CURRENT_LANG === 'fa' && fa) ? fa : (city.country || '');
+}
+
 function getWindDirection(degrees) {
     if (degrees === null || degrees === undefined) {
         return '--';
@@ -205,22 +220,37 @@ async function openDonateModal() {
     overlay.id = 'donate-overlay';
     overlay.className = 'modal-overlay';
 
+    // Each tier is a radio-style card: cup, name, price, and a tick that
+    // appears on the selected one so the choice is unmistakable.
     const tiers = coffeeTiers.map((tier, i) => `
-        <button type="button" class="coffee-tier${i === 0 ? ' selected' : ''}" data-id="${escapeHtml(tier.id)}">
-            <span class="coffee-cup">☕</span>
+        <button type="button" class="coffee-tier${i === 0 ? ' selected' : ''}"
+                role="radio" aria-checked="${i === 0 ? 'true' : 'false'}"
+                data-id="${escapeHtml(tier.id)}" data-toman="${Number(tier.toman)}">
+            <span class="coffee-check" aria-hidden="true">✓</span>
+            <span class="coffee-cup" aria-hidden="true">☕</span>
             <span class="coffee-name">${escapeHtml(tierName(tier))}</span>
             <span class="coffee-price">${escapeHtml(formatToman(tier.toman))}</span>
         </button>
     `).join('');
 
     overlay.innerHTML = `
-        <div class="modal-card" role="dialog" aria-modal="true" aria-label="${t('donate_title')}">
+        <div class="modal-card donate-modal" role="dialog" aria-modal="true" aria-label="${t('donate_title')}">
             <button type="button" class="modal-close" aria-label="${t('donate_close')}">&times;</button>
-            <h3 class="modal-title">${t('donate_title')}</h3>
-            <p class="modal-text">${t('donate_intro')}</p>
-            <p class="modal-text">${t('donate_where')}</p>
+
+            <div class="donate-header">
+                <div class="donate-emoji" aria-hidden="true">☕</div>
+                <h3 class="modal-title">${t('donate_title')}</h3>
+                <p class="donate-sub">${t('donate_intro')}</p>
+            </div>
+
+            <div class="donate-where">
+                <span class="donate-where-icon" aria-hidden="true">💜</span>
+                <p>${t('donate_where')}</p>
+            </div>
+
             <p class="modal-pick">${t('donate_pick')}</p>
-            <div class="coffee-tiers">${tiers}</div>
+            <div class="coffee-tiers" role="radiogroup" aria-label="${t('donate_pick')}">${tiers}</div>
+
             <div class="donate-fields">
                 <!-- data-clarity-mask keeps the supporter's real name out of
                      Clarity session recordings. -->
@@ -235,19 +265,37 @@ async function openDonateModal() {
                            data-clarity-mask="true">
                 </div>
             </div>
+
             <p class="donate-error" id="donate-error"></p>
-            <button type="button" class="btn donate-continue" id="donate-continue">${t('donate_continue')}</button>
+            <button type="button" class="btn donate-continue" id="donate-continue"></button>
+            <p class="donate-secure">${t('donate_secure')}</p>
         </div>
     `;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('show'));
 
     let selected = coffeeTiers[0].id;
+    const continueLabel = () => {
+        const tier = coffeeTiers.find(item => item.id === selected);
+        return tier ? `${t('donate_continue')} · ${formatToman(tier.toman)}` : t('donate_continue');
+    };
+
+    // The amount rides along in the button label, so nobody reaches the
+    // gateway unsure of what they are about to pay.
+    const setContinueLabel = () => {
+        overlay.querySelector('#donate-continue').textContent = continueLabel();
+    };
+    setContinueLabel();
+
     overlay.querySelectorAll('.coffee-tier').forEach(btn => {
         btn.addEventListener('click', () => {
             selected = btn.dataset.id;
-            overlay.querySelectorAll('.coffee-tier').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
+            overlay.querySelectorAll('.coffee-tier').forEach(other => {
+                const active = other === btn;
+                other.classList.toggle('selected', active);
+                other.setAttribute('aria-checked', active ? 'true' : 'false');
+            });
+            setContinueLabel();
         });
     });
 
@@ -288,7 +336,7 @@ async function openDonateModal() {
             console.error('Payment request failed:', err);
             errorEl.textContent = t('donate_error');
             continueBtn.disabled = false;
-            continueBtn.textContent = t('donate_continue');
+            setContinueLabel();
         }
     });
 }

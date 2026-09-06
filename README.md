@@ -69,8 +69,12 @@ Cities are managed from the admin panel and stored in `data/cities.json`. The de
 
 Served by nginx (`frontend/`):
 
-- **Home** (`index.html`) — intro about the project (admin-editable), tracked-city cards, what we measure
-- **Cities** (`cities.html`) — a **live world map** (static Natural Earth SVG, no external tiles) with every tracked city as a dot — hover for latest conditions, click to open the dashboard — plus the city cards
+- **Home** (`index.html`) — intro about the project (admin-editable), tracked-city cards with a **country filter**, what we measure
+- **Cities** (`cities.html`) — a **live world map** (static Natural Earth SVG, no external tiles) with every tracked city as a dot — hover for latest conditions, click to open the dashboard — plus the city cards, both narrowed by the same country filter
+
+The **country filter** is a row of chips built from the countries actually tracked, with a count on each. It appears once more than one country is tracked, and on the cities page it filters the map as well as the cards. Home links through to `cities.html?country=<country>` so a selection survives the jump.
+
+City and country **names are bilingual**: the English name is the source (it becomes the city id used in URLs, file names and exports) and the Farsi name is what the Farsi site shows. A city with no Farsi name falls back to English rather than showing a blank, so nothing breaks before an admin translates it — including every city created before the fields existed.
 - **City dashboard** (`city.html?city=<id>`) — summary, trends charts, records, temperature/wind analytics, calm periods and recent raw data
 - **Compare** (`compare.html`) — pick 2-4 cities and see their metrics side by side plus overlaid temperature/wind charts
 - **News** (`news.html`) — announcements written in the admin panel (bilingual, newest first). Until the first post is published the page shows a friendly empty state, so it is safe to ship before there is anything to say
@@ -107,7 +111,7 @@ the site name, city, the reading's timestamp and the site's domain.
 
 ## Public API
 
-- `GET /cities` — tracked cities with latest snapshot
+- `GET /cities` — tracked cities with latest snapshot (`name`/`country` are English, `name_fa`/`country_fa` Farsi and possibly empty)
 - `GET /cities/{id}` — city detail
 - `GET /cities/{id}/data?limit=` — raw records, newest first
 - `GET /cities/{id}/summary?period=` — includes optional humidity/feels-like/precipitation/pressure when present
@@ -136,7 +140,7 @@ Default login is `admin` / `admin123`. **Change it before deploying**: pick a ne
 
 From the panel an admin can:
 
-- **Manage cities**: add any city in the world (name, country, coordinates), enable/disable, delete, or collect a snapshot immediately (per city or all at once)
+- **Manage cities**: add any city in the world (English and Farsi name, English and Farsi country, coordinates), **edit** an existing one, enable/disable, delete, or collect a snapshot immediately (per city or all at once). Cities created before the bilingual names existed show *not set* in the table — use **Edit** to fill their Farsi names in; nothing else about the city changes
 - **Manage site content**: every text block on the public main page and info page (site name, tagline, intro, about, mission, data description, contact, footer), separately for Farsi and English, plus the donate (Buy me a coffee) URL
 - **Manage news posts**: write, edit and delete the bilingual posts shown on the public News page. A post can be saved unpublished (draft) and stays invisible to visitors until it is published; a language left empty falls back to the other one
 - **Manage coffee tiers and prices**: rename tiers, change the amounts charged, turn a tier off or add a new one (see *Payments* above)

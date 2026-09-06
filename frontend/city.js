@@ -14,8 +14,8 @@ function setText(id, value) {
 async function loadCityInfo() {
     const city = await apiRequest(`/cities/${encodeURIComponent(CITY_ID)}`);
     SHARE_STATE.city = city;
-    document.title = `${city.name} - Weather Watch`;
-    setText('city-name', `${city.name}, ${city.country}`);
+    document.title = `${cityName(city)} - ${document.getElementById('site-name').textContent}`;
+    setText('city-name', `${cityName(city)}, ${cityCountry(city)}`);
 
     const latest = city.latest || {};
     const condition = latest.condition_desc ? ` | ${latest.condition_desc}` : '';
@@ -463,7 +463,7 @@ function shareBase(sectionKey, theme) {
     const city = SHARE_STATE.city || {};
     const brand = document.getElementById('site-name');
     const latest = city.latest || {};
-    const parts = [city.country, latest.condition_desc].filter(Boolean);
+    const parts = [cityCountry(city), latest.condition_desc].filter(Boolean);
 
     return {
         theme,
@@ -471,7 +471,7 @@ function shareBase(sectionKey, theme) {
         section: t(sectionKey),
         // ASCII base for the downloaded file name, independent of language.
         fileBase: `${CITY_ID}-${sectionKey.replace(/_/g, '-')}`,
-        title: city.name || '',
+        title: cityName(city),
         subtitle: parts.join(' • '),
         timestamp: `${t('last_update')} ${formatDateTime(city.last_record)}`,
         domain: window.location.host

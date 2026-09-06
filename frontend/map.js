@@ -44,7 +44,8 @@ function renderCityMap(container, cities) {
 
         dot.addEventListener('mousemove', event => {
             const rect = wrapper.getBoundingClientRect();
-            tooltip.innerHTML = `<strong>${city.name}</strong>, ${city.country}<br>${temp}${wind}`;
+            tooltip.innerHTML =
+                `<strong>${cityName(city)}</strong>, ${cityCountry(city)}<br>${temp}${wind}`;
             tooltip.style.display = 'block';
             let x = event.clientX - rect.left + 14;
             let y = event.clientY - rect.top - 10;

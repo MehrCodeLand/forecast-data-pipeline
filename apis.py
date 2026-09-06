@@ -208,6 +208,10 @@ async def list_cities():
             "id": city["id"],
             "name": city["name"],
             "country": city["country"],
+            # Farsi names, empty until an admin fills them in; the site then
+            # falls back to the English ones.
+            "name_fa": city.get("name_fa", ""),
+            "country_fa": city.get("country_fa", ""),
             "latitude": city["latitude"],
             "longitude": city["longitude"],
             "records": len(data),
@@ -224,6 +228,8 @@ async def city_detail(city_id: str):
         "id": city["id"],
         "name": city["name"],
         "country": city["country"],
+        "name_fa": city.get("name_fa", ""),
+        "country_fa": city.get("country_fa", ""),
         "latitude": city["latitude"],
         "longitude": city["longitude"],
         "records": len(data),

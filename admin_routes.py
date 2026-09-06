@@ -36,8 +36,13 @@ class LoginRequest(BaseModel):
 
 
 class CityCreateRequest(BaseModel):
+    # English name and country are required: they drive the city id and every
+    # export. The Farsi ones are optional, so a city can be added quickly and
+    # translated later.
     name: str = Field(min_length=1, max_length=80)
     country: str = Field(min_length=1, max_length=80)
+    name_fa: str = Field(default="", max_length=80)
+    country_fa: str = Field(default="", max_length=80)
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
 
@@ -45,6 +50,10 @@ class CityCreateRequest(BaseModel):
 class CityUpdateRequest(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=80)
     country: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    # Empty string is allowed here: it clears a Farsi name back to the
+    # English fallback.
+    name_fa: Optional[str] = Field(default=None, max_length=80)
+    country_fa: Optional[str] = Field(default=None, max_length=80)
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     enabled: Optional[bool] = None
@@ -207,7 +216,8 @@ def create_admin_router(city_store: CityStore, scheduler: WeatherScheduler) -> A
 
     @router.post("/api/cities", dependencies=[Depends(require_admin)])
     async def add_city(body: CityCreateRequest):
-        city = city_store.add(body.name, body.country, body.latitude, body.longitude)
+        city = city_store.add(body.name, body.country, body.latitude, body.longitude,
+                              name_fa=body.name_fa, country_fa=body.country_fa)
         # Collect a first snapshot right away so the new city is not empty
         # until the next scheduled run (which could be up to an hour later).
         collected = await scheduler.collect_city(city)

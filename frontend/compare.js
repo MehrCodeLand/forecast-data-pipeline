@@ -10,8 +10,8 @@ function pickerItem(city) {
     return `
         <label class="picker-item">
             <input type="checkbox" value="${city.id}">
-            <span class="picker-name">${city.name}</span>
-            <span class="picker-detail">${city.country} | ${temp}</span>
+            <span class="picker-name">${cityName(city)}</span>
+            <span class="picker-detail">${cityCountry(city)} | ${temp}</span>
         </label>
     `;
 }
@@ -66,7 +66,7 @@ function compareRow(label, values) {
 
 function renderCompareTable(cities, summaries) {
     const head = `<thead><tr><th>${t('metric')}</th>` +
-        cities.map(c => `<th>${c.name}</th>`).join('') + '</tr></thead>';
+        cities.map(c => `<th>${cityName(c)}</th>`).join('') + '</tr></thead>';
 
     const rows = [
         compareRow(t('average') + ' (' + t('temperature') + ')', summaries.map(s => s?.avg_temperature)),
@@ -135,7 +135,7 @@ async function runCompare() {
         renderCompareTable(cities, summaries);
 
         const series = field => cities.map((c, i) => ({
-            name: c.name,
+            name: cityName(c),
             color: COMPARE_COLORS[i % COMPARE_COLORS.length],
             points: histories[i].map(rec => ({
                 label: formatDateTime(rec.time),

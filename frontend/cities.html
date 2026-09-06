@@ -55,7 +55,7 @@
                     <span class="theme-knob"></span>
                     <svg class="theme-ic theme-ic-moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
                 </button>
-                <button id="donate-link" class="donate-btn" type="button" aria-label="Buy me a coffee">☕</button>
+                <button id="donate-link" class="donate-btn" type="button" aria-label="Buy me a coffee"><span class="donate-btn-cup" aria-hidden="true">☕</span><span class="donate-btn-label" data-i18n="donate_short">Support</span></button>
                 <button id="lang-toggle" class="btn btn-secondary lang-btn" type="button">EN</button>
             </div>
         </div>
@@ -69,6 +69,9 @@
 
         <div id="loading" class="loading" data-i18n="loading">Loading...</div>
         <div id="error" class="error" style="display: none;"></div>
+
+        <!-- Filters both the map and the city cards below it. -->
+        <div id="country-filter" class="country-filter" hidden></div>
 
         <div class="card">
             <h3 data-i18n="map_title">Live Map</h3>
@@ -90,6 +93,7 @@
     <script src="api.js"></script>
     <script src="world-map.js"></script>
     <script src="map.js"></script>
+    <script src="country-filter.js"></script>
     <script src="cities.js"></script>
 </body>
 </html>
