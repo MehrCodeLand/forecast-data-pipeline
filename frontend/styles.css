@@ -1267,10 +1267,67 @@ tbody tr:hover {
 footer {
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-    padding: 20px 0;
-    text-align: center;
+    padding: 28px 0 24px;
     color: var(--text-secondary);
     font-size: 0.9rem;
+}
+
+/* Two columns: who made the site, and an invitation to suggest features.
+   They stack on narrow screens. */
+.site-footer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 24px;
+    align-items: start;
+    text-align: start;
+}
+
+.site-footer > * {
+    min-width: 0;
+}
+
+.site-footer #footer-text {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.footer-credit {
+    line-height: 2;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.footer-dev {
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer-dev:hover {
+    text-decoration: underline;
+}
+
+.footer-ideas h3 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.footer-ideas p {
+    line-height: 1.9;
+    margin-bottom: 14px;
+}
+
+.footer-ideas .btn {
+    text-decoration: none;
+}
+
+@media (max-width: 600px) {
+    .site-footer {
+        text-align: center;
+        justify-items: center;
+    }
 }
 
 /* Responsive */

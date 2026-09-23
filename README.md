@@ -86,6 +86,8 @@ The site is a **PWA**: it ships a web manifest, icons and a service worker (`sw.
 
 The site is **bilingual (Farsi/English)**: Farsi is the default (with full RTL layout and Persian dates); visitors switch languages with the navbar toggle and the choice is remembered. UI strings live in `frontend/i18n.js`; the admin-managed content is stored per language. A **"Buy me a coffee" donate button** is shown in the navbar; its target URL is set from the admin panel (Site Content section). The info page credits the developers (Mehrshad Asadi, Sepehr Sedigh) with LinkedIn links.
 
+Every page ends with the same **site footer**: the site name, "built and run by" with both developers linked to their LinkedIn profiles, and an invitation to suggest features. The invitation's button opens a pre-addressed email to the contact address set in the admin panel (Site Content → contact email), with the subject filled in; with no contact address configured the button hides itself rather than offering a dead link.
+
 ## What we collect per snapshot
 
 Each snapshot stores the classic fields — temperature, wind speed, wind direction, day/night flag and weather code — plus, when the API provides them, **humidity, apparent ("feels like") temperature, precipitation and surface pressure**. These extra fields were added later: existing keys are never renamed, so records collected before the fields existed remain fully readable and every metric that uses a new field simply ignores records that lack it. No migration of old data is needed.

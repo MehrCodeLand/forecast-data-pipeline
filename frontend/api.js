@@ -118,6 +118,11 @@ async function loadSiteContent() {
             footerText.textContent = content.footer_text;
         }
 
+        // "Send us your idea" points at the contact address the admin set.
+        // Without one there is nowhere to send it, so the button stays
+        // hidden rather than offering a dead link.
+        applyFooterContact(content);
+
         // Custom site icon (admin-uploaded data: URL): use it for the browser
         // tab favicon and as a small logo next to the site name in the navbar.
         if (full.icon_data_url) {
@@ -129,6 +134,22 @@ async function loadSiteContent() {
     } catch (error) {
         return null;
     }
+}
+
+function applyFooterContact(content) {
+    const link = document.getElementById('footer-contact');
+    if (!link) return;
+
+    const email = (content.contact_email || '').trim();
+    if (!email) {
+        link.hidden = true;
+        return;
+    }
+    const subject = content.site_name
+        ? `${t('footer_ideas_subject')} - ${content.site_name}`
+        : t('footer_ideas_subject');
+    link.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    link.hidden = false;
 }
 
 // Apply an admin-uploaded icon to the favicon and the navbar brand.
